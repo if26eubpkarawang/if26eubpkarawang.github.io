@@ -46,7 +46,9 @@
     .portal-header .eyebrow { color: #d9efdf; }
     .portal-header h1 { font-size: clamp(25px, 4vw, 34px); }
     .portal-header .subtitle { color: #e4f0e7; }
-    .account-chip { display: flex; align-items: center; gap: 11px; max-width: 260px; padding: 9px 13px 9px 9px; border: 1px solid rgba(255,255,255,.32); border-radius: 15px; background: rgba(255,255,255,.13); }
+    .account-chip { display: flex; align-items: center; gap: 11px; max-width: 260px; padding: 9px 13px 9px 9px; border: 1px solid rgba(255,255,255,.32); border-radius: 15px; background: rgba(255,255,255,.13); color: inherit; cursor: pointer; font: inherit; text-align: left; }
+    .account-chip:hover { background: rgba(255,255,255,.2); }
+    .account-chip:focus-visible { outline: 3px solid rgba(255,255,255,.75); outline-offset: 3px; }
     .avatar { width: 42px; height: 42px; flex: 0 0 42px; display: grid; place-items: center; border-radius: 13px; background: #f2bf57; color: #284735; font-size: 15px; font-weight: 900; }
     .account-chip strong, .account-chip small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .account-chip small { color: #e4f0e7; font-size: 11px; }
@@ -142,16 +144,15 @@
           <h1>Portal Admin IF26E</h1>
           <p class="subtitle">Kelola tugas kelas dengan lebih mudah.</p>
         </div>
-        <div class="account-chip">
+        <button class="account-chip" type="button" data-open-admin-view="profile" aria-label="Buka profil admin">
           <span class="avatar" id="profileAvatar" aria-hidden="true">IF</span>
           <span><strong id="profileSummaryName">Pengurus IF26E</strong><small id="profileSummaryUserId"></small></span>
-        </div>
+        </button>
       </header>
       <nav class="portal-tabs" id="portalTabs" aria-label="Halaman admin">
         <button class="portal-tab" type="button" data-admin-view="overview" aria-current="page">Ringkasan</button>
         <button class="portal-tab" type="button" data-admin-view="upload">Upload tugas</button>
         <button class="portal-tab" type="button" data-admin-view="tasks">Kelola tugas</button>
-        <button class="portal-tab" type="button" data-admin-view="profile">Profil admin</button>
       </nav>
 
       <section class="admin-view card view-card" id="overviewView" aria-labelledby="overviewTitle">
