@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f7f2">
+  <title>Halaman Admin IF26E</title>
+  <style>
+    :root { color-scheme: light; --ink: #1d3129; --muted: #748078; --green: #277451; --green-dark: #1c5d40; --line: #e7ebe5; --canvas: #f5f7f2; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--canvas) url("./doodle-bg.svg") repeat; background-size: 300px 260px; color: var(--ink); font: 15px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    [hidden] { display: none !important; }
+    .page { width: min(940px, calc(100% - 32px)); margin: 0 auto; padding: 34px 0 56px; }
+    .topbar { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+    .nav-link, .button, .file-link { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; padding: 9px 13px; border: 1px solid #d7e5da; border-radius: 10px; background: #f5faf6; color: var(--green-dark); font-size: 13px; font-weight: 750; text-decoration: none; }
+    .nav-link:hover, .button:hover, .file-link:hover { background: #e8f2eb; }
+    .button.primary { border-color: #236543; background: linear-gradient(135deg, #277451, #1d5e40); color: #fff; }
+    .button.primary:hover { background: linear-gradient(135deg, #236a47, #194f36); }
+    .button.danger { border-color: #ecd8d6; background: #fff8f7; color: #9a3832; }
+    .button.danger:hover { background: #fff0ee; }
+    .button:focus-visible, .nav-link:focus-visible, .file-link:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid rgba(39, 116, 81, .25); outline-offset: 2px; }
+    .card { overflow: hidden; border: 1px solid var(--line); border-radius: 18px; background: #fff; box-shadow: 0 16px 42px rgba(34, 57, 43, .07); }
+    .heading { padding: 24px; border-bottom: 1px solid var(--line); }
+    h1 { margin: 0; font-size: clamp(26px, 5vw, 36px); letter-spacing: -.05em; }
+    .subtitle { margin: 5px 0 0; color: var(--muted); font-size: 14px; }
+    .toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: 18px; }
+    .toolbar-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .status { min-height: 20px; margin: 12px 0 0; color: #68776d; font-size: 13px; }
+    .status.error { color: #a33b35; }
+    .form-wrap { margin: 20px 24px; padding: 17px; border: 1px solid #e8e1ef; border-radius: 14px; background: #fbf9fd; }
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; }
+    .field { display: grid; gap: 6px; min-width: 0; color: #526158; font-size: 12px; font-weight: 700; }
+    .field.full { grid-column: 1 / -1; }
+    .field input, .field select, .field textarea { width: 100%; min-height: 42px; padding: 10px 11px; border: 1px solid #dfe8e0; border-radius: 9px; background: #fff; color: var(--ink); font-size: 14px; font-weight: 500; }
+    .field textarea { min-height: 86px; resize: vertical; }
+    .upload { margin: 0 24px 22px; padding: 18px; border: 1px solid #e0ebe2; border-radius: 15px; background: #f8faf7; }
+    .upload h2 { margin: 0 0 14px; font-size: 18px; }
+    .feed { padding: 0 24px 24px; }
+    .course + .course { margin-top: 26px; }
+    .course h2 { margin: 0 0 12px; color: var(--green-dark); font-size: 17px; }
+    .assignments { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .assignment { min-width: 0; padding: 16px; border: 1px solid #e4e9e3; border-radius: 14px; background: #fff; }
+    .assignment h3 { margin: 0; font-size: 16px; }
+    .assignment p { margin: 8px 0 0; color: #66736b; font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .meta { margin-top: 10px; color: var(--muted); font-size: 12px; }
+    .actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; }
+    .empty { padding: 42px 18px; text-align: center; }
+    .empty h2 { margin: 0 0 5px; font-size: 17px; }
+    .empty p { margin: 0; color: var(--muted); font-size: 13px; }
+    @media (max-width: 640px) {
+      .page { padding-top: 20px; }
+      .heading { padding: 20px 17px; }
+      .form-wrap, .upload { margin-right: 10px; margin-left: 10px; padding: 14px; }
+      .feed { padding-right: 10px; padding-left: 10px; }
+      .form-grid, .assignments { grid-template-columns: 1fr; }
+      .field.full { grid-column: auto; }
+      .toolbar { align-items: flex-start; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <nav class="topbar" aria-label="Navigasi">
+      <a class="nav-link" href="./index.html">Beranda</a>
+      <a class="nav-link" href="./activate.html">Aktivasi akun pengurus</a>
+    </nav>
+    <section class="card" aria-labelledby="pageTitle">
+      <header class="heading">
+        <h1 id="pageTitle">Halaman Admin IF26E</h1>
+        <p class="subtitle">Masuk untuk mengunggah dan mengelola tugas mata kuliah.</p>
+        <div class="toolbar">
+          <span class="status" id="sessionStatus" role="status" aria-live="polite"></span>
+          <div class="toolbar-actions">
+            <button class="button" id="loginToggle" type="button">Login Pengurus</button>
+            <button class="button" id="logoutButton" type="button" hidden>Keluar</button>
+          </div>
+        </div>
+      </header>
+      <form class="form-wrap" id="loginForm" hidden>
+        <div class="form-grid">
+          <label class="field">User ID
+            <input id="userId" type="text" placeholder="contoh: if26e-4827-baru" autocomplete="username" required>
+          </label>
+          <label class="field">Password
+            <input id="password" type="password" autocomplete="current-password" required>
+          </label>
+          <div class="field full">
+            <button class="button primary" id="loginButton" type="submit">Masuk</button>
+          </div>
+        </div>
+        <p class="status" id="loginStatus" role="status" aria-live="polite"></p>
+      </form>
+      <section class="upload" id="uploadPanel" hidden aria-labelledby="uploadTitle">
+        <h2 id="uploadTitle">Unggah tugas baru</h2>
+        <form class="form-grid" id="uploadForm">
+          <label class="field">Mata kuliah
+            <select id="course" required></select>
+          </label>
+          <label class="field">Judul tugas
+            <input id="title" type="text" maxlength="120" required>
+          </label>
+          <label class="field">Tenggat (opsional)
+            <input id="dueDate" type="date">
+          </label>
+          <label class="field">File tugas (PDF, Office, atau ZIP; maks. 20 MB)
+            <input id="file" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip" required>
+          </label>
+          <label class="field full">Keterangan (opsional)
+            <textarea id="description" maxlength="2000"></textarea>
+          </label>
+          <div class="field full">
+            <button class="button primary" id="uploadButton" type="submit">Unggah tugas</button>
+            <p class="status" id="uploadStatus" role="status" aria-live="polite"></p>
+          </div>
+        </form>
+      </section>
+      <div class="feed">
+        <p class="status" id="loadStatus" role="status" aria-live="polite"></p>
+        <p class="status" id="deleteStatus" role="status" aria-live="polite"></p>
+        <div id="assignmentFeed" aria-live="polite"></div>
+      </div>
+    </section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    (function () {
+      "use strict";
+      var SUPABASE_URL = "https://dbkrodgnevwnokgremjz.supabase.co";
+      var SUPABASE_ANON_KEY = "sb_publishable_vAZ1GYe2T8LPns-nNPKrmQ_aveEpiM3";
+      var uploadBucket = "if26e-tugas";
+      var isAdmin = false;
+      var scheduleCourses = {
+        algoritmaPraktik: { name: "Algoritma (Praktik)" },
+        algoritmaTeori: { name: "Algoritma (Teori)" },
+        pti: { name: "Pengantar Teknologi Informasi" },
+        pancasila: { name: "Pendidikan Pancasila" },
+        jaringanTeori: { name: "Jaringan Komputer (Teori)" },
+        statistika: { name: "Statistika & Probabilitas" },
+        sistemOperasi: { name: "Sistem Operasi" },
+        kalkulus: { name: "Kalkulus" },
+        jaringanPraktik: { name: "Jaringan Komputer (Praktik)" }
+      };
+      var allowedExtensions = ["pdf", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "zip"];
+      var supabaseClient = window.supabase && window.supabase.createClient
+        ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+        : null;
+      var elements = {
+        loginToggle: document.getElementById("loginToggle"),
+        loginForm: document.getElementById("loginForm"),
+        loginButton: document.getElementById("loginButton"),
+        userId: document.getElementById("userId"),
+        password: document.getElementById("password"),
+        sessionStatus: document.getElementById("sessionStatus"),
+        logoutButton: document.getElementById("logoutButton"),
+        uploadPanel: document.getElementById("uploadPanel"),
+        uploadForm: document.getElementById("uploadForm"),
+        uploadButton: document.getElementById("uploadButton"),
+        course: document.getElementById("course"),
+        assignmentFeed: document.getElementById("assignmentFeed")
+      };
+
+      function setStatus(id, message, isError) {
+        var element = document.getElementById(id);
+        element.textContent = message;
+        element.className = "status" + (isError ? " error" : "");
+      }
+
+      function escapeHTML(value) {
+        return String(value).replace(/[&<>"']/g, function (character) {
+          return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character];
+        });
+      }
+
+      function populateCourses() {
+        elements.course.innerHTML = Object.keys(scheduleCourses).map(function (courseKey) {
+          return '<option value="' + escapeHTML(courseKey) + '">' + escapeHTML(scheduleCourses[courseKey].name) + '</option>';
+        }).join("");
+      }
+
+      function setAdminState(enabled) {
+        isAdmin = enabled;
+        elements.loginToggle.hidden = enabled;
+        elements.loginForm.hidden = enabled || elements.loginForm.hidden;
+        elements.logoutButton.hidden = !enabled;
+        elements.uploadPanel.hidden = !enabled;
+        elements.sessionStatus.textContent = enabled ? "Login sebagai pengurus IF26E." : "";
+        elements.password.value = "";
+        loadAssignments();
+      }
+
+      function verifyAdminMembership(session) {
+        if (!session) {
+          setAdminState(false);
+          return Promise.resolve(false);
+        }
+        return supabaseClient.from("if26e_admins")
+          .select("user_id")
+          .eq("user_id", session.user.id)
+          .maybeSingle()
+          .then(function (result) {
+            if (result.error) {
+              console.error("Tidak dapat memeriksa hak akses admin.", result.error);
+              setAdminState(false);
+              elements.loginForm.hidden = false;
+              setStatus("loginStatus", "Tidak dapat memeriksa akses admin. Pastikan SQL Supabase sudah dijalankan.", true);
+              return supabaseClient.auth.signOut().then(function (signOutResult) {
+                if (signOutResult.error) console.error("Tidak dapat mengakhiri sesi.", signOutResult.error);
+                return false;
+              });
+            }
+            if (!result.data) {
+              setAdminState(false);
+              elements.loginForm.hidden = false;
+              setStatus("loginStatus", "Akun ini belum diberi hak admin. Periksa tabel if26e_admins.", true);
+              return supabaseClient.auth.signOut().then(function (signOutResult) {
+                if (signOutResult.error) console.error("Tidak dapat mengakhiri sesi.", signOutResult.error);
+                return false;
+              });
+            }
+            setAdminState(true);
+            setStatus("loginStatus", "", false);
+            return true;
+          });
+      }
+
+      function renderAssignments(rows) {
+        var grouped = {};
+        rows.forEach(function (assignment) {
+          if (!scheduleCourses[assignment.course_key]) return;
+          if (!grouped[assignment.course_key]) grouped[assignment.course_key] = [];
+          grouped[assignment.course_key].push(assignment);
+        });
+        var markup = Object.keys(scheduleCourses).map(function (courseKey) {
+          var assignments = grouped[courseKey];
+          if (!assignments || !assignments.length) return "";
+          return '<section class="course"><h2>' + escapeHTML(scheduleCourses[courseKey].name) + '</h2><div class="assignments">' +
+            assignments.map(function (assignment) {
+              var dueDate = assignment.due_date
+                ? new Date(assignment.due_date + "T00:00:00").toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
+                : "Tidak ada tenggat";
+              var fileUrl = supabaseClient.storage.from(uploadBucket).getPublicUrl(assignment.file_path).data.publicUrl;
+              return '<article class="assignment"><h3>' + escapeHTML(assignment.title) + '</h3>' +
+                (assignment.description ? '<p>' + escapeHTML(assignment.description) + '</p>' : '') +
+                '<div class="meta">Tenggat: ' + escapeHTML(dueDate) + '</div>' +
+                '<div class="actions"><a class="file-link" href="' + escapeHTML(fileUrl) + '" target="_blank" rel="noopener noreferrer">Unduh ' + escapeHTML(assignment.file_name) + '</a>' +
+                '<button class="button danger" type="button" data-delete-assignment="true" data-assignment-id="' + escapeHTML(assignment.id) +
+                '" data-file-path="' + escapeHTML(assignment.file_path) + '">Hapus pengumuman</button></div></article>';
+            }).join("") + '</div></section>';
+        }).join("");
+        elements.assignmentFeed.innerHTML = markup || '<div class="empty"><h2>Belum ada tugas</h2><p>Tugas yang diunggah pengurus akan muncul di sini.</p></div>';
+      }
+
+      function loadAssignments() {
+        if (!supabaseClient) {
+          setStatus("loadStatus", "Fitur admin belum terhubung. Periksa koneksi internet.", true);
+          elements.assignmentFeed.innerHTML = "";
+          return;
+        }
+        setStatus("loadStatus", "Memuat daftar tugas…", false);
+        supabaseClient.from("if26e_assignments")
+          .select("id, course_key, title, description, due_date, file_path, file_name, created_at")
+          .order("due_date", { ascending: true })
+          .order("created_at", { ascending: false })
+          .then(function (result) {
+            if (result.error) {
+              console.error("Tidak dapat memuat daftar tugas.", result.error);
+              setStatus("loadStatus", "Daftar tugas gagal dimuat. Periksa koneksi dan kebijakan akses.", true);
+              elements.assignmentFeed.innerHTML = "";
+              return;
+            }
+            setStatus("loadStatus", "", false);
+            renderAssignments(result.data || []);
+          })
+          .catch(function (error) {
+            console.error("Kesalahan saat memuat daftar tugas.", error);
+            setStatus("loadStatus", "Terjadi kesalahan saat memuat daftar tugas. Coba muat ulang halaman.", true);
+            elements.assignmentFeed.innerHTML = "";
+          });
+      }
+
+      function deleteAssignment(button) {
+        if (!supabaseClient || !isAdmin) {
+          setStatus("deleteStatus", "Login sebagai pengurus untuk menghapus tugas.", true);
+          return;
+        }
+        var assignmentId = button.getAttribute("data-assignment-id");
+        var filePath = button.getAttribute("data-file-path");
+        if (!assignmentId || !filePath) {
+          setStatus("deleteStatus", "Data tugas tidak lengkap sehingga tidak dapat dihapus.", true);
+          return;
+        }
+        if (!window.confirm("Hapus pengumuman tugas ini beserta file yang diunggah? Tindakan ini tidak dapat dibatalkan.")) return;
+        button.disabled = true;
+        setStatus("deleteStatus", "Menghapus pengumuman tugas…", false);
+        var assignmentDeleted = false;
+        supabaseClient.from("if26e_assignments")
+          .delete()
+          .eq("id", assignmentId)
+          .select("id")
+          .then(function (result) {
+            if (result.error) {
+              console.error("Tidak dapat menghapus data tugas.", result.error);
+              setStatus("deleteStatus", "Tugas gagal dihapus. Pastikan akses admin dan koneksi tersedia.", true);
+              return;
+            }
+            if (!result.data || result.data.length !== 1) {
+              setStatus("deleteStatus", "Tugas tidak ditemukan atau sudah dihapus.", true);
+              return;
+            }
+            assignmentDeleted = true;
+            return supabaseClient.storage.from(uploadBucket).remove([filePath])
+              .then(function (storageResult) {
+                if (storageResult.error) {
+                  console.error("Data tugas terhapus, tetapi file gagal dibersihkan.", storageResult.error);
+                  setStatus("deleteStatus", "Tugas sudah dihapus, tetapi file gagal dihapus dari penyimpanan.", true);
+                  return;
+                }
+                setStatus("deleteStatus", "Pengumuman dan file tugas berhasil dihapus.", false);
+              })
+              .catch(function (error) {
+                console.error("Data tugas terhapus, tetapi file gagal dibersihkan.", error);
+                setStatus("deleteStatus", "Tugas sudah dihapus, tetapi file gagal dihapus dari penyimpanan.", true);
+              });
+          })
+          .catch(function (error) {
+            console.error("Kesalahan saat menghapus tugas.", error);
+            setStatus("deleteStatus", assignmentDeleted
+              ? "Tugas sudah dihapus, tetapi file gagal dihapus dari penyimpanan."
+              : "Tugas gagal dihapus. Coba lagi.", true);
+          })
+          .then(function () {
+            if (assignmentDeleted) loadAssignments();
+            button.disabled = false;
+          });
+      }
+
+      elements.loginToggle.addEventListener("click", function () {
+        elements.loginForm.hidden = !elements.loginForm.hidden;
+        if (!elements.loginForm.hidden) elements.userId.focus();
+      });
+
+      elements.loginForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+        if (!supabaseClient) {
+          setStatus("loginStatus", "Login belum tersedia. Periksa koneksi internet.", true);
+          return;
+        }
+        var userId = elements.userId.value.trim();
+        if (!/^[a-zA-Z0-9._-]{3,64}$/.test(userId)) {
+          setStatus("loginStatus", "Format User ID tidak valid.", true);
+          return;
+        }
+        elements.loginButton.disabled = true;
+        setStatus("loginStatus", "Memeriksa login…", false);
+        supabaseClient.auth.signInWithPassword({
+          email: userId + "@if26e.invalid",
+          password: elements.password.value
+        }).then(function (result) {
+          if (result.error) {
+            console.error("Login admin gagal.", result.error);
+            setStatus("loginStatus", "Login gagal. Periksa User ID dan password.", true);
+            return false;
+          }
+          return verifyAdminMembership(result.data.session);
+        }).catch(function (error) {
+          console.error("Kesalahan saat login admin.", error);
+          setStatus("loginStatus", "Login gagal karena terjadi kesalahan. Coba lagi.", true);
+        }).then(function () {
+          elements.loginButton.disabled = false;
+        });
+      });
+
+      elements.logoutButton.addEventListener("click", function () {
+        supabaseClient.auth.signOut().then(function (result) {
+          if (result.error) {
+            console.error("Logout admin gagal.", result.error);
+            setStatus("sessionStatus", "Tidak dapat keluar. Coba lagi.", true);
+            return;
+          }
+          setAdminState(false);
+          setStatus("sessionStatus", "Anda sudah keluar.", false);
+        }).catch(function (error) {
+          console.error("Kesalahan saat logout admin.", error);
+          setStatus("sessionStatus", "Tidak dapat keluar. Coba lagi.", true);
+        });
+      });
+
+      elements.assignmentFeed.addEventListener("click", function (event) {
+        var button = event.target.closest("[data-delete-assignment]");
+        if (button) deleteAssignment(button);
+      });
+
+      elements.uploadForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+        if (!supabaseClient || !isAdmin) {
+          setStatus("uploadStatus", "Silakan login dengan akun admin terlebih dahulu.", true);
+          return;
+        }
+        var file = document.getElementById("file").files[0];
+        if (!file) {
+          setStatus("uploadStatus", "Pilih file tugas terlebih dahulu.", true);
+          return;
+        }
+        var extension = file.name.split(".").pop().toLowerCase();
+        if (allowedExtensions.indexOf(extension) === -1) {
+          setStatus("uploadStatus", "Format file harus PDF, Office, atau ZIP.", true);
+          return;
+        }
+        if (file.size > 20 * 1024 * 1024) {
+          setStatus("uploadStatus", "Ukuran file maksimal 20 MB.", true);
+          return;
+        }
+        var courseKey = elements.course.value;
+        var safeFileName = file.name.replace(/[^A-Za-z0-9._-]/g, "_");
+        var filePath = Date.now() + "-" + Math.random().toString(36).slice(2) + "-" + safeFileName;
+        var uploadedPath = "";
+        elements.uploadButton.disabled = true;
+        setStatus("uploadStatus", "Mengunggah file dan menyimpan tugas…", false);
+        supabaseClient.storage.from(uploadBucket).upload(filePath, file, {
+          cacheControl: "3600", upsert: false, contentType: file.type || undefined
+        }).then(function (uploadResult) {
+          if (uploadResult.error) throw uploadResult.error;
+          uploadedPath = filePath;
+          return supabaseClient.from("if26e_assignments").insert({
+            course_key: courseKey,
+            course_name: scheduleCourses[courseKey].name,
+            title: document.getElementById("title").value.trim(),
+            description: document.getElementById("description").value.trim(),
+            due_date: document.getElementById("dueDate").value || null,
+            file_path: filePath,
+            file_name: file.name
+          });
+        }).then(function (insertResult) {
+          if (insertResult.error) {
+            return supabaseClient.storage.from(uploadBucket).remove([uploadedPath]).then(function (cleanupResult) {
+              if (cleanupResult.error) console.error("File tugas sementara gagal dibersihkan.", cleanupResult.error);
+              throw insertResult.error;
+            });
+          }
+          setStatus("uploadStatus", "Tugas berhasil diunggah.", false);
+          setStatus("deleteStatus", "", false);
+          elements.uploadForm.reset();
+          populateCourses();
+          loadAssignments();
+        }).catch(function (error) {
+          console.error("Unggah tugas gagal.", error);
+          setStatus("uploadStatus", "Tugas gagal diunggah. Periksa koneksi dan kebijakan Supabase.", true);
+        }).then(function () {
+          elements.uploadButton.disabled = false;
+        });
+      });
+
+      populateCourses();
+      loadAssignments();
+      if (supabaseClient) {
+        supabaseClient.auth.getSession().then(function (result) {
+          if (result.error) {
+            console.error("Tidak dapat memulihkan sesi admin.", result.error);
+            setStatus("loginStatus", "Sesi login tidak dapat diperiksa. Coba login kembali.", true);
+            return;
+          }
+          if (result.data.session) return verifyAdminMembership(result.data.session);
+        }).catch(function (error) {
+          console.error("Kesalahan saat memeriksa sesi admin.", error);
+          setStatus("loginStatus", "Sesi login tidak dapat diperiksa. Coba muat ulang halaman.", true);
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

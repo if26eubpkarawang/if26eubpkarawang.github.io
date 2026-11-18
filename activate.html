@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f7f2">
+  <title>Aktivasi Akun Pengurus IF26E</title>
+  <style>
+    :root { color-scheme: light; --ink: #1d3129; --muted: #748078; --green: #277451; --green-dark: #1c5d40; --line: #e7ebe5; --canvas: #f5f7f2; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--canvas) url("./doodle-bg.svg") repeat; background-size: 300px 260px; color: var(--ink); font: 15px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    [hidden] { display: none !important; }
+    .page { width: min(620px, calc(100% - 32px)); margin: 0 auto; padding: 42px 0 56px; }
+    .back { display: inline-flex; margin-bottom: 18px; padding: 9px 13px; border: 1px solid #d7e5da; border-radius: 10px; background: #f5faf6; color: var(--green-dark); font-size: 13px; font-weight: 750; text-decoration: none; }
+    .card { padding: 25px; border: 1px solid var(--line); border-radius: 18px; background: #fff; box-shadow: 0 16px 42px rgba(34, 57, 43, .07); }
+    h1 { margin: 0; font-size: clamp(26px, 5vw, 34px); letter-spacing: -.05em; }
+    .intro { margin: 7px 0 20px; color: var(--muted); font-size: 14px; }
+    .form { display: grid; gap: 14px; }
+    label { display: grid; gap: 6px; color: #526158; font-size: 12px; font-weight: 700; }
+    input { width: 100%; min-height: 44px; padding: 10px 11px; border: 1px solid #dfe8e0; border-radius: 9px; background: #fff; color: var(--ink); font: inherit; font-size: 14px; font-weight: 500; }
+    input:focus-visible, button:focus-visible, .back:focus-visible { outline: 3px solid rgba(39, 116, 81, .25); outline-offset: 2px; }
+    .button { min-height: 43px; padding: 10px 14px; border: 1px solid #236543; border-radius: 10px; background: linear-gradient(135deg, #277451, #1d5e40); color: #fff; font-size: 14px; font-weight: 750; cursor: pointer; }
+    .button:hover { background: linear-gradient(135deg, #236a47, #194f36); }
+    .status { min-height: 20px; margin: 12px 0 0; color: #68776d; font-size: 13px; }
+    .status.error { color: #a33b35; }
+    .note { margin: 17px 0 0; padding: 12px 13px; border: 1px solid #e0ebe2; border-radius: 11px; background: #f8faf7; color: #64746a; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <a class="back" href="./admin.html">Kembali ke Halaman Admin</a>
+    <section class="card" aria-labelledby="pageTitle">
+      <h1 id="pageTitle">Aktivasi akun pengurus</h1>
+      <p class="intro">Masukkan User ID dan kode aktivasi yang diberikan kepada Anda, lalu buat password pribadi.</p>
+      <form class="form" id="activationForm">
+        <label>User ID
+          <input id="userId" type="text" autocomplete="username" autocapitalize="none" required>
+        </label>
+        <label>Kode aktivasi
+          <input id="activationCode" type="password" autocomplete="one-time-code" required>
+        </label>
+        <label>Password saat ini (hanya jika akun ini sudah ada)
+          <input id="currentPassword" type="password" autocomplete="current-password">
+        </label>
+        <label>Password baru (minimal 12 karakter)
+          <input id="newPassword" type="password" autocomplete="new-password" minlength="12" required>
+        </label>
+        <label>Ulangi password baru
+          <input id="confirmPassword" type="password" autocomplete="new-password" minlength="12" required>
+        </label>
+        <button class="button" id="activateButton" type="submit">Aktifkan akun</button>
+      </form>
+      <p class="status" id="status" role="status" aria-live="polite"></p>
+      <p class="note">Kode aktivasi hanya dapat digunakan satu kali. Jangan membagikan kode atau password Anda. Jika akun sudah ada, masukkan password saat ini agar dapat diperbarui.</p>
+    </section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    (function () {
+      "use strict";
+      var SUPABASE_URL = "https://dbkrodgnevwnokgremjz.supabase.co";
+      var SUPABASE_ANON_KEY = "sb_publishable_vAZ1GYe2T8LPns-nNPKrmQ_aveEpiM3";
+      var client = window.supabase && window.supabase.createClient
+        ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+        : null;
+      var form = document.getElementById("activationForm");
+      var button = document.getElementById("activateButton");
+
+      function setStatus(message, isError) {
+        var status = document.getElementById("status");
+        status.textContent = message;
+        status.className = "status" + (isError ? " error" : "");
+      }
+
+      function finishActivation(userId, code, newPassword) {
+        return client.auth.updateUser({ password: newPassword })
+          .then(function (updateResult) {
+            if (updateResult.error) throw updateResult.error;
+            return client.rpc("claim_if26e_admin_invite", {
+              p_user_id: userId,
+              p_code: code
+            });
+          })
+          .then(function (claimResult) {
+            if (claimResult.error) throw claimResult.error;
+            setStatus("Akun berhasil diaktifkan. Membuka Halaman Admin…", false);
+            window.location.replace("./admin.html");
+          });
+      }
+
+      form.addEventListener("submit", function (event) {
+        event.preventDefault();
+        if (!client) {
+          setStatus("Aktivasi belum tersedia. Periksa koneksi internet lalu muat ulang halaman.", true);
+          return;
+        }
+        var userId = document.getElementById("userId").value.trim().toLowerCase();
+        var code = document.getElementById("activationCode").value;
+        var currentPassword = document.getElementById("currentPassword").value;
+        var newPassword = document.getElementById("newPassword").value;
+        var confirmPassword = document.getElementById("confirmPassword").value;
+        if (!/^[a-z0-9._-]{3,64}$/.test(userId)) {
+          setStatus("Format User ID tidak valid.", true);
+          return;
+        }
+        if (newPassword.length < 12) {
+          setStatus("Password baru harus minimal 12 karakter.", true);
+          return;
+        }
+        if (newPassword !== confirmPassword) {
+          setStatus("Konfirmasi password tidak sama.", true);
+          return;
+        }
+        button.disabled = true;
+        setStatus("Memverifikasi kode dan mengaktifkan akun…", false);
+        var email = userId + "@if26e.invalid";
+        client.auth.getSession().then(function (sessionResult) {
+          if (sessionResult.error) throw sessionResult.error;
+          var session = sessionResult.data.session;
+          if (session && session.user.email && session.user.email.toLowerCase() === email) {
+            return { existingSession: true };
+          }
+          if (session) {
+            return client.auth.signOut().then(function (signOutResult) {
+              if (signOutResult.error) throw signOutResult.error;
+              return { existingSession: false };
+            });
+          }
+          return { existingSession: false };
+        }).then(function (sessionState) {
+          if (sessionState.existingSession) return { updatePassword: false };
+          if (currentPassword) {
+            return client.auth.signInWithPassword({ email: email, password: currentPassword })
+              .then(function (signInResult) {
+                if (signInResult.error) throw signInResult.error;
+                return { updatePassword: true };
+              });
+          }
+          return client.auth.signUp({ email: email, password: newPassword })
+            .then(function (signUpResult) {
+              if (signUpResult.error) {
+                if (/already registered|already exists/i.test(signUpResult.error.message)) {
+                  throw new Error("Akun sudah ada. Masukkan password saat ini untuk melanjutkan.");
+                }
+                throw signUpResult.error;
+              }
+              if (!signUpResult.data.session) {
+                throw new Error("Supabase meminta konfirmasi email, tetapi alamat internal tidak dapat menerima email. Pengelola perlu menonaktifkan konfirmasi email untuk akun pengurus.");
+              }
+              return { updatePassword: false };
+            });
+        }).then(function () {
+          return finishActivation(userId, code, newPassword);
+        }).catch(function (error) {
+          console.error("Aktivasi akun gagal.", error);
+          setStatus(error.message || "Aktivasi gagal. Periksa User ID/kode, koneksi, dan status aktivasi akun.", true);
+        }).then(function () {
+          button.disabled = false;
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f7f2">
+  <title>IF26E</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1d3129;
+      --muted: #748078;
+      --green: #277451;
+      --green-dark: #1c5d40;
+      --mint: #e8f2eb;
+      --line: #e7ebe5;
+      --paper: #fff;
+      --canvas: #f5f7f2;
+      --lavender: #f0ecf7;
+      --purple: #78649a;
+      --shadow: 0 16px 42px rgba(34, 57, 43, .07);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background-color: var(--canvas);
+      background-image: url("./doodle-bg.svg");
+      background-repeat: repeat;
+      background-size: 300px 260px;
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    .page { width: min(1120px, calc(100% - 48px)); margin: 0 auto; }
+    .topbar {
+      height: 76px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      border-bottom: 1px solid rgba(29, 49, 41, .08);
+    }
+    .home-link {
+      display: inline-flex; align-items: center; gap: 8px; padding: 8px 11px;
+      border: 1px solid var(--line); border-radius: 9px; background: #fff; color: #526158;
+      font-size: 13px; font-weight: 650;
+    }
+    .home-link:hover { background: #f7f9f6; }
+    .music-toggle {
+      position: fixed; z-index: 20; top: 16px; left: 16px;
+      width: 48px; height: 48px; display: grid; place-items: center;
+      border: 1px solid #dfe8e0; border-radius: 15px; background: rgba(255, 255, 255, .95);
+      color: var(--green-dark); box-shadow: 0 8px 20px rgba(34, 57, 43, .12);
+      transition: transform .18s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease;
+    }
+    .music-toggle:hover { transform: translateY(-2px); border-color: #b6cdbb; box-shadow: 0 11px 24px rgba(34, 57, 43, .16); }
+    .music-toggle[aria-pressed="true"] { border-color: #236543; background: linear-gradient(135deg, #277451, #1d5e40); color: #fff; }
+    .music-toggle .music-icon-on { display: none; }
+    .music-toggle .music-icon-off { display: block; }
+    .music-toggle[aria-pressed="true"] .music-icon-on { display: block; }
+    .music-toggle[aria-pressed="true"] .music-icon-off { display: none; }
+    .music-toggle:focus-visible { outline: 3px solid rgba(39, 116, 81, .25); outline-offset: 3px; }
+    .help-button {
+      position: fixed; z-index: 20; left: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+      min-height: 48px; padding: 0 16px; display: inline-flex; align-items: center; gap: 9px;
+      border: 1px solid #1d5e40; border-radius: 999px;
+      background: linear-gradient(135deg, #277451, #1d5e40); color: #fff;
+      box-shadow: 0 8px 20px rgba(34, 57, 43, .2);
+      font-size: 14px; font-weight: 750; text-decoration: none;
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+    .help-button:hover { transform: translateY(-2px); box-shadow: 0 11px 24px rgba(34, 57, 43, .25); }
+    .help-button:focus-visible { outline: 3px solid rgba(39, 116, 81, .3); outline-offset: 3px; }
+    main { padding: 42px 0 64px; }
+    .home-hero { padding: 28px 0 8px; text-align: center; }
+    .eyebrow { color: var(--green); font-size: 12px; font-weight: 750; letter-spacing: .11em; text-transform: uppercase; }
+    h1 { margin: 10px 0 12px; font-size: clamp(34px, 5vw, 50px); letter-spacing: -.06em; line-height: 1.08; }
+    .home-hero h1 {
+      display: inline-block;
+      color: #1d3129;
+      font-family: "Trebuchet MS", "Arial Rounded MT Bold", "Comic Sans MS", sans-serif;
+      max-width: 100%;
+      font-size: clamp(32px, 8vw, 72px);
+      font-weight: 900;
+      letter-spacing: .02em;
+      line-height: 1;
+      -webkit-text-stroke: 1px #1d3129;
+      text-shadow: 3px 3px 0 #f2bf57, 6px 6px 0 #e8f2eb;
+      transform: rotate(-2deg);
+    }
+    .subtitle { margin: 0 auto; color: var(--muted); max-width: 540px; }
+    .category-grid { width: min(680px, 100%); margin: 38px auto 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 18px; }
+    .category-card {
+      position: relative; isolation: isolate; overflow: hidden;
+      min-height: 220px; padding: 25px; display: flex; flex-direction: column; align-items: stretch;
+      text-align: left; border: 1px solid #e8e1ef; border-radius: 22px;
+      background: radial-gradient(circle at 100% 0%, rgba(120, 100, 154, .1) 0 135px, transparent 136px), linear-gradient(135deg, #fff 0%, #fff 58%, #faf8fd 100%);
+      box-shadow: 0 14px 34px rgba(58, 45, 79, .09); color: var(--ink);
+      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    }
+    .category-card::before, .category-card::after {
+      position: absolute; z-index: -1; content: ""; border: 1px solid rgba(120, 100, 154, .18); border-radius: 50%;
+    }
+    .category-card::before { width: 190px; height: 190px; top: -105px; right: -62px; }
+    .category-card::after { width: 135px; height: 135px; top: -78px; right: -35px; }
+    .category-card > * { position: relative; z-index: 1; }
+    .category-card:hover { transform: translateY(-4px); border-color: #d4c8e3; box-shadow: 0 22px 48px rgba(58, 45, 79, .15); }
+    .category-card-top { display: flex; align-items: start; justify-content: space-between; }
+    .category-icon {
+      width: 58px; height: 58px; display: grid; place-items: center; border: 1px solid #e7def1;
+      border-radius: 18px; color: var(--purple); background: linear-gradient(145deg, #eee8f6, #fbf9fd);
+      box-shadow: 0 7px 16px rgba(92, 72, 124, .1);
+    }
+    .category-card.officers .category-icon { color: var(--purple); background: linear-gradient(145deg, #eee8f6, #fbf9fd); }
+    .category-card.schedule .category-icon { color: var(--green); background: linear-gradient(145deg, #e5f2e9, #f8fcf9); }
+    .category-card.assignments .category-icon { color: var(--green-dark); background: linear-gradient(145deg, #e5f2e9, #f8fcf9); }
+    .category-arrow {
+      width: 38px; height: 38px; padding: 9px; border: 1px solid #e9e1ef; border-radius: 12px;
+      color: var(--purple); background: rgba(255, 255, 255, .8); transition: transform .18s ease;
+    }
+    .category-card:hover .category-arrow { transform: translate(3px, -3px); color: var(--green); }
+    .category-card.officers:hover .category-arrow { color: var(--purple); }
+    .category-card h2 { margin: 23px 0 8px; font-size: 21px; letter-spacing: -.035em; line-height: 1.25; }
+    .category-card h2::after { display: block; width: 42px; height: 3px; margin-top: 11px; border-radius: 99px; background: linear-gradient(90deg, #78649a, #c0add8); content: ""; }
+    .category-card p { margin: 0; color: #6f747e; font-size: 13px; }
+    .home-note { margin: 28px 0 0; text-align: center; color: #89938c; font-size: 12px; }
+    .home-announcement-board {
+      position: relative; isolation: isolate; overflow: hidden;
+      width: min(850px, 100%); margin: 28px auto 0; padding: 22px;
+      border: 1px solid #dce8dd; border-radius: 20px;
+      background: radial-gradient(circle at 100% 0%, rgba(242, 191, 87, .15) 0 110px, transparent 111px), linear-gradient(135deg, #fff 0%, #fbfdf9 100%);
+      box-shadow: 0 18px 42px rgba(34, 57, 43, .1);
+    }
+    .home-announcement-board::before {
+      position: absolute; z-index: 0; inset: 0 0 auto; height: 5px;
+      background: linear-gradient(90deg, #f2bf57 0%, #277451 42%, #1c5d40 100%); content: "";
+    }
+    .home-announcement-board::after {
+      position: absolute; z-index: 0; top: -105px; right: -72px; width: 190px; height: 190px;
+      border: 1px solid rgba(39, 116, 81, .12); border-radius: 50%;
+      box-shadow: 0 0 0 18px rgba(39, 116, 81, .035), 0 0 0 38px rgba(39, 116, 81, .025);
+      content: ""; pointer-events: none;
+    }
+    .home-announcement-board > * { position: relative; z-index: 1; }
+    .home-announcement-heading { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 5px 0 14px; text-align: center; }
+    .home-announcement-heading h2 { display: flex; align-items: center; justify-content: center; gap: 11px; font-size: 22px; }
+    .home-announcement-icon {
+      width: 42px; height: 42px; flex: 0 0 42px; display: grid; place-items: center;
+      border: 1px solid #e7dfc2; border-radius: 14px; color: var(--green-dark);
+      background: linear-gradient(145deg, #fff6dc, #e8f2eb); box-shadow: 0 6px 14px rgba(79, 91, 56, .1);
+    }
+    #homeAnnouncementStatus {
+      margin: 0; padding: 18px 14px; border: 1px dashed #d8e5d9; border-radius: 14px;
+      background: rgba(255, 255, 255, .72); color: #64746a; font-size: 14px; text-align: center;
+    }
+    #homeAnnouncementStatus:empty { display: none; }
+    .home-announcement-list { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+    .home-announcement-footer { display: flex; justify-content: flex-end; margin-top: 12px; }
+    .home-announcement-footer .assignment-button { min-height: 34px; padding: 7px 12px; border-color: #cfe0d1; border-radius: 9px; background: linear-gradient(135deg, #fff, #f0f7f1); color: var(--green-dark); font-size: 11px; font-weight: 750; }
+    .home-announcement-footer .assignment-button:hover { border-color: #a9c8b0; background: linear-gradient(135deg, #f7fbf7, #e8f2eb); }
+    .home-announcement-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 14px 0; border-top: 1px solid var(--line); text-align: center; }
+    .home-announcement-item > div { display: flex; flex-direction: column; align-items: center; text-align: center; }
+    .home-announcement-title { display: block; margin-top: 4px; border: 0; padding: 0; background: none; color: var(--green-dark); font: inherit; font-weight: 750; text-align: center; cursor: pointer; }
+    .home-announcement-title:hover { text-decoration: underline; }
+    .home-announcement-course { display: block; color: #748078; font-size: 13px; font-weight: 700; }
+    .home-announcement-due { display: block; color: #748078; font-size: 12px; }
+    .directory { border: 1px solid var(--line); background: var(--paper); border-radius: 18px; box-shadow: var(--shadow); overflow: hidden; }
+    .directory-heading { padding: 24px 24px 18px; }
+    .directory-title { margin: 18px 0 5px; font-size: 30px; letter-spacing: -.05em; }
+    .directory-subtitle { margin: 0; color: var(--muted); font-size: 14px; }
+    h2 { margin: 0; font-size: 18px; letter-spacing: -.025em; }
+    .field input:focus, .field select:focus { border-color: #83b49a; box-shadow: 0 0 0 3px rgba(39,116,81,.1); }
+    .class-selector { padding: 0 22px 22px; }
+    .class-selector-label { margin: 0 0 12px; color: #64746a; font-size: 13px; font-weight: 700; }
+    .class-selector-options { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 11px; }
+    .class-choice {
+      position: relative; display: flex; align-items: center; justify-content: center; gap: 9px;
+      min-height: 56px; padding: 12px 14px; border: 1px solid #e1e9e2; border-radius: 15px;
+      background: linear-gradient(145deg, #fff, #f8faf7); color: #526158; font-weight: 800;
+      box-shadow: 0 3px 9px rgba(34, 57, 43, .04);
+      transition: transform .18s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease, color .18s ease;
+    }
+    .class-choice::before {
+      width: 9px; height: 9px; flex: 0 0 auto; border: 2px solid #a6b6aa; border-radius: 50%;
+      background: #fff; content: ""; transition: background .18s ease, border-color .18s ease, box-shadow .18s ease;
+    }
+    .class-choice:hover { transform: translateY(-2px); border-color: #a9c5b0; background: #f5faf6; box-shadow: 0 8px 16px rgba(34, 57, 43, .08); }
+    .class-choice[aria-pressed="true"] {
+      border-color: #236543; background: linear-gradient(135deg, #277451, #1d5e40);
+      color: #fff; box-shadow: 0 8px 18px rgba(39, 116, 81, .22);
+    }
+    .class-choice[aria-pressed="true"]::before { border-color: #fff; background: #fff; box-shadow: 0 0 0 4px rgba(255, 255, 255, .18); }
+    .class-choice[aria-pressed="true"]:hover { background: linear-gradient(135deg, #236a47, #194f36); }
+    .class-choice:focus-visible { outline: 3px solid rgba(39, 116, 81, .22); outline-offset: 2px; }
+    .class-selection-empty { padding-top: 32px; }
+    .schedule-view { padding: 0 22px 24px; }
+    .schedule-note {
+      margin: 0 0 14px; padding: 10px 13px; border: 1px solid #e0ebe2; border-radius: 12px;
+      background: linear-gradient(110deg, #f2f8f3, #fbfcfa); color: #53665a; font-size: 13px; font-weight: 600;
+    }
+    .schedule-table-wrap {
+      overflow-x: auto; border: 1px solid #dfe8e0; border-radius: 16px;
+      background: #fff; box-shadow: 0 10px 26px rgba(34, 57, 43, .07); overscroll-behavior-x: contain;
+    }
+    .schedule-table { width: 100%; min-width: 700px; border-collapse: separate; border-spacing: 0; background: #fff; font-size: 13px; }
+    .schedule-table th, .schedule-table td { padding: 13px 15px; border-bottom: 1px solid #edf1ed; text-align: left; }
+    .schedule-table th {
+      background: linear-gradient(135deg, #285e43, #347653); color: #fff;
+      font-size: 10px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap;
+    }
+    .schedule-table th:first-child { border-top-left-radius: 15px; }
+    .schedule-table th:last-child { border-top-right-radius: 15px; }
+    .schedule-table tbody tr:nth-child(even) td:not(.schedule-day) { background: #fbfcfa; }
+    .schedule-table tbody tr:hover td:not(.schedule-day) { background: #f2f8f3; }
+    .schedule-table td.schedule-day {
+      min-width: 90px; border-right: 1px solid #dce9df; background: linear-gradient(160deg, #eaf4ec, #f4f8f4);
+      color: var(--green-dark); font-weight: 800; vertical-align: middle;
+    }
+    .schedule-table td.schedule-time { color: #526158; font-variant-numeric: tabular-nums; font-weight: 650; white-space: nowrap; }
+    .schedule-table td.schedule-code { color: #7a8790; font-size: 12px; white-space: nowrap; }
+    .schedule-table td.schedule-lecturer { min-width: 190px; color: #526158; }
+    .schedule-table td.schedule-room { color: var(--green-dark); font-weight: 750; white-space: nowrap; }
+    .schedule-table tr:last-child td { border-bottom: 0; }
+    .contact-list { padding: 0 22px; }
+    .contact {
+      display: grid; grid-template-columns: minmax(210px, 1.2fr) minmax(155px, .8fr) minmax(130px, .8fr) auto;
+      align-items: center; gap: 18px; min-height: 91px; border-bottom: 1px solid var(--line);
+    }
+    .contact:last-child { border-bottom: 0; }
+    .contact-grid-wrap { padding: 18px 22px 30px; }
+    .contact-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px 18px; }
+    .contact-group-heading { grid-column: 1 / -1; margin: 8px 0 -6px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 20px; }
+    .contact-group-heading:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+    .contact-card {
+      position: relative; isolation: isolate; overflow: hidden;
+      display: flex; flex-direction: column; align-items: stretch; gap: 14px; min-width: 0; min-height: 180px;
+      padding: 16px; border: 1px solid #e6deee; border-radius: 20px;
+      background: radial-gradient(circle at 100% 0%, rgba(120, 100, 154, .08) 0 90px, transparent 91px), linear-gradient(145deg, #fff 0%, #fff 64%, #faf8fd 100%);
+      box-shadow: 0 12px 28px rgba(58, 45, 79, .08);
+      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    }
+    .contact-card::before, .contact-card::after { position: absolute; content: ""; pointer-events: none; }
+    .contact-card::before { z-index: 1; top: 0; left: 16px; width: 46px; height: 4px; border-radius: 0 0 6px 6px; background: linear-gradient(90deg, #78649a, #c0add8); }
+    .contact-card::after { z-index: -1; top: -50px; right: -52px; width: 112px; height: 112px; border: 1px solid rgba(120, 100, 154, .16); border-radius: 50%; }
+    .contact-card > * { position: relative; z-index: 1; }
+    .contact-card:hover { transform: translateY(-3px); border-color: #d3c7e2; box-shadow: 0 19px 36px rgba(58, 45, 79, .14); }
+    .contact-card .person { align-items: flex-start; }
+    .contact-card .person-name { white-space: normal; }
+    .contact-card .detail-block { padding: 9px 10px; border: 1px solid #eee9f4; border-radius: 12px; background: rgba(248, 246, 251, .9); }
+    .contact-card .detail-label { color: #8a799e; }
+    .contact-card .detail-value { margin-top: 4px; line-height: 1.4; }
+    .contact-card .contact-actions { margin-top: 0; justify-content: space-between; flex-wrap: wrap; }
+    .contact-card-leader { grid-column: span 2; }
+    .lecturer-toggle {
+      padding: 8px 10px; border: 1px solid #d7e5da; border-radius: 9px;
+      background: #f5faf6; color: var(--green-dark); font-size: 12px; font-weight: 700; text-align: left;
+    }
+    .lecturer-toggle:hover { background: #e8f2eb; }
+    .lecturer-dialog {
+      width: min(440px, calc(100% - 32px)); max-height: min(80vh, 640px); margin: auto; padding: 22px;
+      border: 1px solid var(--line); border-radius: 18px; background: #fff; color: var(--ink);
+      box-shadow: 0 24px 70px rgba(20, 38, 28, .22); overflow: auto;
+    }
+    .lecturer-dialog::backdrop { background: rgba(24, 40, 31, .48); backdrop-filter: blur(2px); }
+    .lecturer-dialog-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 16px; }
+    .lecturer-dialog-header h2 { font-size: 20px; }
+    .lecturer-dialog-close {
+      padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: #526158;
+      font-size: 12px; font-weight: 700;
+    }
+    .lecturer-dialog-close:hover { background: #f7f9f6; }
+    .lecturer-dialog-content { display: grid; gap: 16px; }
+    .lecturer-dialog-officer {
+      display: flex; align-items: center; gap: 13px; padding: 14px; border: 1px solid #dfe9e1;
+      border-radius: 14px; background: #f8faf7;
+    }
+    .lecturer-dialog-officer .avatar { width: 48px; height: 48px; }
+    .lecturer-dialog-officer-info { flex: 1; min-width: 0; }
+    .lecturer-dialog-label { color: #748078; font-size: 10px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
+    .lecturer-dialog-officer-name { margin-top: 3px; font-size: 15px; font-weight: 750; }
+    .lecturer-dialog-officer-role { margin-top: 2px; color: var(--muted); font-size: 12px; }
+    .lecturer-dialog-section-title { margin: 0 0 9px; font-size: 15px; font-weight: 750; }
+    .lecturer-entry { padding: 13px; border: 1px solid #dfe9e1; border-radius: 13px; background: #fff; }
+    .lecturer-entry + .lecturer-entry { margin-top: 10px; }
+    .lecturer-entry-name { font-size: 13px; font-weight: 750; }
+    .lecturer-entry-role { margin: 2px 0 8px; color: var(--muted); font-size: 12px; }
+    .person { display: flex; align-items: center; gap: 13px; min-width: 0; }
+    .avatar {
+      width: 43px; height: 43px; flex: 0 0 auto; display: grid; place-items: center;
+      border-radius: 14px; overflow: hidden; background: #f0eee3; color: #827348; font-size: 14px; font-weight: 750;
+    }
+    .avatar svg {
+      width: 100%; height: 100%; display: block;
+    }
+    .avatar.green { background: #e8f2eb; color: #387753; }
+    .avatar.lilac { background: #f0ecf7; color: #78649a; }
+    .avatar.blue { background: #eaf1f5; color: #52758a; }
+    .person-name { overflow: hidden; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+    .person-meta { color: var(--muted); font-size: 12px; margin-top: 2px; }
+    .detail-label { color: #9aa39d; font-size: 11px; letter-spacing: .04em; text-transform: uppercase; }
+    .detail-value { margin-top: 3px; font-size: 13px; font-weight: 600; }
+    .contact-actions { display: flex; align-items: center; gap: 7px; }
+    .wa-button {
+      border: 0; border-radius: 9px; padding: 8px 10px; display: flex; align-items: center; gap: 7px;
+      background: #e9f5ed; color: #277451; font-size: 12px; font-weight: 750; text-decoration: none; white-space: nowrap;
+    }
+    .wa-button.disabled { color: #9aa39d; background: #f3f5f2; pointer-events: none; }
+    .empty { text-align: center; padding: 58px 20px; }
+    .empty-icon { width: 54px; height: 54px; margin: 0 auto 13px; display: grid; place-items: center; border-radius: 17px; background: var(--mint); color: var(--green); }
+    .empty h3 { margin: 0 0 5px; font-size: 16px; }
+    .empty p { margin: 0; color: var(--muted); font-size: 13px; }
+    .assignment-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; }
+    .assignment-button, .assignment-link {
+      display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 9px 13px;
+      border: 1px solid #d7e5da; border-radius: 10px; background: #f5faf6; color: var(--green-dark);
+      font-size: 13px; font-weight: 750; text-decoration: none;
+    }
+    .assignment-button:hover, .assignment-link:hover { background: #e8f2eb; }
+    .assignment-button.primary { border-color: #236543; background: linear-gradient(135deg, #277451, #1d5e40); color: #fff; }
+    .assignment-button.primary:hover { background: linear-gradient(135deg, #236a47, #194f36); }
+    .assignment-panel { margin: 0 22px 22px; padding: 18px; border: 1px solid #e0ebe2; border-radius: 15px; background: #f8faf7; }
+    .assignment-panel h2 { margin-bottom: 14px; }
+    .assignment-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; }
+    .assignment-field { display: grid; gap: 6px; min-width: 0; color: #526158; font-size: 12px; font-weight: 700; }
+    .assignment-field.full { grid-column: 1 / -1; }
+    .assignment-field input, .assignment-field select, .assignment-field textarea {
+      width: 100%; min-height: 42px; padding: 10px 11px; border: 1px solid #dfe8e0; border-radius: 9px;
+      background: #fff; color: var(--ink); font-size: 14px; font-weight: 500;
+    }
+    .assignment-field textarea { min-height: 86px; resize: vertical; }
+    .assignment-field input:focus, .assignment-field select:focus, .assignment-field textarea:focus {
+      outline: 0; border-color: #83b49a; box-shadow: 0 0 0 3px rgba(39, 116, 81, .1);
+    }
+    .assignment-status { margin: 12px 0 0; color: #68776d; font-size: 13px; }
+    .assignment-status.error { color: #a33b35; }
+    .assignment-feed { padding: 0 22px 24px; }
+    .assignment-course + .assignment-course { margin-top: 26px; }
+    .assignment-course h2 { margin: 0 0 12px; color: var(--green-dark); font-size: 17px; }
+    .assignment-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .assignment-card { min-width: 0; padding: 16px; border: 1px solid #e4e9e3; border-radius: 14px; background: #fff; }
+    .assignment-card h3 { margin: 0; font-size: 16px; }
+    .assignment-card p { margin: 8px 0 0; color: #66736b; font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .assignment-meta { margin-top: 10px; color: #748078; font-size: 12px; }
+    .assignment-card-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+    .assignment-card .assignment-link { margin-top: 0; }
+    footer { display: flex; justify-content: space-between; gap: 15px; padding: 17px 22px; border-top: 1px solid var(--line); color: #89938c; font-size: 12px; }
+    footer strong { color: #5b6b61; font-weight: 650; }
+    [hidden] { display: none !important; }
+    @media (max-width: 760px) {
+      .page { width: min(100% - 32px, 600px); }
+      main { padding-top: 30px; }
+      .category-grid { gap: 12px; }
+      .category-card { min-height: 205px; padding: 20px; }
+      .home-announcement-board { padding: 16px; }
+      .home-announcement-heading { align-items: center; flex-direction: column; }
+      .class-selector { padding: 0 8px 18px; }
+      .class-selector-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .schedule-view { padding: 0 8px 20px; }
+      .schedule-note::after { display: block; margin-top: 3px; color: #78877d; content: "Geser tabel ke samping untuk melihat semua kolom."; font-size: 11px; font-weight: 500; }
+      .contact { grid-template-columns: minmax(0, 1fr) auto; gap: 9px; padding: 15px 0; }
+      .contact .detail-block { display: none; }
+      .contact-actions { grid-column: 2; grid-row: 1; }
+      .contact-list { padding: 0 8px; }
+      .contact-grid-wrap { padding: 16px 8px 24px; }
+      .contact-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 10px; }
+      .contact-card { min-height: 184px; padding: 11px; }
+      .contact-card .person { gap: 8px; }
+      .contact-card .avatar { width: 36px; height: 36px; border-radius: 12px; font-size: 12px; }
+      .contact-card .person-name { overflow: visible; text-overflow: clip; }
+      .contact-card .detail-block { display: block; }
+      .contact-card .contact-actions { grid-column: auto; grid-row: auto; }
+      .contact-card-leader { grid-column: auto; }
+      .contact-card:not(.contact-card-leader) { grid-column: 1 / -1; }
+      .assignment-feed { padding-right: 8px; padding-left: 8px; }
+      .assignment-cards { grid-template-columns: 1fr; }
+      .assignment-toolbar { align-items: flex-start; flex-direction: column; }
+      footer { padding: 15px 16px; flex-direction: column; }
+    }
+    @media (max-width: 420px) {
+      main { padding-top: 20px; }
+      .home-hero { padding-top: 24px; }
+      .category-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 26px; }
+      .category-card { min-height: 185px; padding: 16px; }
+      .category-card h2 { font-size: 18px; }
+      .directory-heading { padding: 20px 17px 15px; }
+      .directory-title { font-size: 27px; }
+      .contact-card { min-height: 0; }
+    }
+  </style>
+</head>
+<body>
+  <button class="music-toggle" id="musicToggle" type="button" aria-label="Nyalakan musik" aria-pressed="false" title="Nyalakan musik">
+    <svg class="music-icon-on" width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 10v4h3l5 4V6l-5 4H4Z" fill="currentColor"/><path d="M16 9a5 5 0 0 1 0 6m2.5-8.5a8.5 8.5 0 0 1 0 11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    <svg class="music-icon-off" width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 10v4h3l5 4V6l-5 4H4Z" fill="currentColor"/><path d="m16 9 5 6m0-6-5 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+  </button>
+  <a class="help-button" id="helpButton" href="#" target="_blank" rel="noopener noreferrer" aria-label="Hubungi Yudha melalui WhatsApp untuk bantuan" title="Bantuan via WhatsApp" hidden>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 11.6a8 8 0 0 1-11.8 7L4 19.7l1.1-4.1A8 8 0 1 1 20 11.6Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m9 8.5 1.1 1.7-.7.8c.5 1 1.3 1.8 2.4 2.3l.7-.8 1.8.9c-.2 1.1-1 1.5-1.9 1.5-2.6-.4-5.3-3-5.7-5.6 0-.8.5-1.4 1.4-1.6" fill="currentColor"/></svg>
+    <span>Bantuan</span>
+  </a>
+  <audio id="backgroundMusic" src="./background-music.mp3" preload="auto" loop aria-hidden="true"></audio>
+  <div class="page">
+    <header class="topbar" id="topbar" hidden>
+      <button class="home-link" id="headerHomeButton" type="button" hidden>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m10 6-6 6 6 6M4 12h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Beranda
+      </button>
+    </header>
+
+    <main>
+      <section class="home-view" id="homeView">
+        <div class="home-hero">
+          <div class="eyebrow">Satu ruang, semua kontak</div>
+          <h1>IF26E</h1>
+        </div>
+        <section class="home-announcement-board" aria-labelledby="homeAnnouncementTitle">
+          <div class="home-announcement-heading">
+            <div>
+              <h2 id="homeAnnouncementTitle">
+                <span class="home-announcement-icon" aria-hidden="true">
+                  <svg width="21" height="21" viewBox="0 0 24 24" fill="none"><path d="M4.5 10v4h3l9 4V6l-9 4h-3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m8 14 1.5 5h3l-2.2-4.3M19 9a4 4 0 0 1 0 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                <span>Papan Pengumuman</span>
+              </h2>
+            </div>
+          </div>
+          <p class="assignment-status home-announcement-status" id="homeAnnouncementStatus" role="status" aria-live="polite">Memuat pengumuman…</p>
+          <ul class="home-announcement-list" id="homeAnnouncementList" aria-live="polite"></ul>
+          <div class="home-announcement-footer">
+            <button class="assignment-button" id="viewAllAnnouncementsButton" type="button">Lihat semua tugas</button>
+          </div>
+        </section>
+        <div class="category-grid">
+          <button class="category-card officers" data-category="Pengurus Kelas IF26E" data-title="Daftar Kontak Pengurus Kelas IF26E" data-subtitle="Dosen &amp; Koordinator Mata Kuliah" type="button">
+            <span class="category-card-top">
+              <span class="category-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M16 20v-1.6a3.4 3.4 0 0 0-3.4-3.4H6.4A3.4 3.4 0 0 0 3 18.4V20m16 0v-1.6a3.4 3.4 0 0 0-2.5-3.28M9.5 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm8-7.5a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>
+              <svg class="category-arrow" width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <h2>Daftar Kontak Pengurus Kelas IF26E</h2>
+            <p>Dosen &amp; Koordinator Mata Kuliah</p>
+          </button>
+          <button class="category-card officers" data-category="Pengurus Kelas IF26" data-title="Daftar Kontak Pengurus Kelas IF26" data-subtitle="buat yang ingin Lintas" type="button">
+            <span class="category-card-top">
+              <span class="category-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M16 20v-1.6a3.4 3.4 0 0 0-3.4-3.4H6.4A3.4 3.4 0 0 0 3 18.4V20m16 0v-1.6a3.4 3.4 0 0 0-2.5-3.28M9.5 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm8-7.5a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>
+              <svg class="category-arrow" width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <h2>Daftar Kontak Pengurus Kelas IF26</h2>
+            <p>buat yang ingin Lintas</p>
+          </button>
+          <button class="category-card schedule" data-category="Jadwal Mata Kuliah" data-title="Jadwal Mata Kuliah" data-subtitle="Semester ganjil 2026–2027" type="button">
+            <span class="category-card-top">
+              <span class="category-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5" stroke="currentColor" stroke-width="1.7"/><path d="M7.5 3.5v3M16.5 3.5v3M3.5 9.5h17M8 13h2m4 0h2m-8 3h2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>
+              <svg class="category-arrow" width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <h2>Jadwal Mata Kuliah</h2>
+            <p>IF26A sampai IF26E · Semester ganjil 2026–2027</p>
+          </button>
+          <button class="category-card assignments" id="assignmentsCard" type="button">
+            <span class="category-card-top">
+              <span class="category-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M7 3.75h7l4 4v12.5H7a2 2 0 0 1-2-2v-12.5a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M14 4v4h4M8.5 12h7m-7 3.5h7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>
+              <svg class="category-arrow" width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <h2>Tugas Mata Kuliah</h2>
+            <p>Lihat dan unduh tugas IF26E berdasarkan mata kuliah</p>
+          </button>
+        </div>
+        <p class="home-note">Daftar kontak diperbarui oleh pengelola kelas.</p>
+      </section>
+
+      <section class="directory" id="assignmentsView" hidden>
+        <div class="directory-heading">
+          <h1 class="directory-title">Tugas Mata Kuliah</h1>
+          <p class="directory-subtitle">Daftar tugas IF26E yang diunggah pengurus kelas.</p>
+          <div class="assignment-toolbar">
+            <a class="assignment-button" href="./admin.html">Halaman Admin Pengurus</a>
+          </div>
+        </div>
+        <p class="assignment-status" id="assignmentLoadStatus" role="status" aria-live="polite"></p>
+        <div class="assignment-feed" id="assignmentFeed" aria-live="polite"></div>
+      </section>
+
+      <section class="directory" id="directoryView" hidden>
+        <div class="directory-heading">
+          <h1 class="directory-title" id="directoryTitle">Daftar Kontak</h1>
+          <p class="directory-subtitle" id="directorySubtitle"></p>
+        </div>
+        <nav class="class-selector" id="classSelector" aria-label="Pilih kelas IF26" hidden>
+          <p class="class-selector-label">Pilih kelas yang ingin dilihat:</p>
+          <div class="class-selector-options">
+            <button class="class-choice" type="button" data-class-group="IF26A" aria-pressed="false">IF26A</button>
+            <button class="class-choice" type="button" data-class-group="IF26B" aria-pressed="false">IF26B</button>
+            <button class="class-choice" type="button" data-class-group="IF26C" aria-pressed="false">IF26C</button>
+            <button class="class-choice" type="button" data-class-group="IF26D" aria-pressed="false">IF26D</button>
+            <button class="class-choice" type="button" data-class-group="IF26E" data-schedule-only="true" aria-pressed="false" hidden>IF26E</button>
+          </div>
+        </nav>
+        <div class="contact-list" id="contactList" aria-live="polite"></div>
+        <dialog class="lecturer-dialog" id="lecturerDialog" aria-labelledby="lecturerDialogTitle">
+          <div class="lecturer-dialog-header">
+            <h2 id="lecturerDialogTitle">Dosen Mata Kuliah</h2>
+            <button class="lecturer-dialog-close" id="closeLecturerDialog" type="button">Tutup</button>
+          </div>
+          <div class="lecturer-dialog-content" id="lecturerDialogContent" aria-live="polite"></div>
+        </dialog>
+        <footer id="contactTips">
+          <span><strong>Tips:</strong> gunakan tombol WhatsApp untuk menghubungi kontak.</span>
+        </footer>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    (function () {
+      "use strict";
+      var contacts = [
+        { id: "officer-01", name: "Nadya Anggi Kusuma", gender: "female", category: "Pengurus Kelas IF26E", role: "Ketua Mahasiswa", group: "IF26E", phone: "+6285772921368" },
+        { id: "officer-02", name: "Yudha", gender: "male", category: "Pengurus Kelas IF26E", role: "Wakil Ketua Mahasiswa", group: "IF26E", phone: "+6281262582492" },
+        { id: "officer-03", name: "Faqih Hilmi Azizi", gender: "male", category: "Pengurus Kelas IF26E", role: "Koordinator Mata Kuliah - Pengantar Teknologi Informasi", group: "IF26E", phone: "+62895622610606", courseKey: "pti" },
+        { id: "officer-04", name: "Ujang Faizal", gender: "male", category: "Pengurus Kelas IF26E", role: "Koordinator Mata Kuliah - Algoritma", group: "IF26E", phone: "+6285282859860", courseKey: "algoritma" },
+        { id: "officer-05", name: "Asep Mahmuddin", gender: "male", category: "Pengurus Kelas IF26E", role: "Koordinator Mata Kuliah - Sistem Operasi", group: "IF26E", phone: "+6289527175100", courseKey: "sistem-operasi" },
+        { id: "officer-06", name: "Winka Amalia Zahra", gender: "female", category: "Pengurus Kelas IF26E", role: "Koordinator Mata Kuliah - Statistika dan Probabilitas", group: "IF26E", phone: "+6285778186963", courseKey: "statistika" },
+        { id: "officer-07", name: "Rafa", gender: "male", category: "Pengurus Kelas IF26E", role: "Koordinator Mata Kuliah - Jaringan Komputer", group: "IF26E", phone: "+6281212035575", courseKey: "jaringan" },
+        { id: "officer-08", name: "Musfirannisa Ghaida Azzahra", gender: "female", category: "Pengurus Kelas IF26E", role: "Koordinator Mata Kuliah - Pendidikan Pancasila", group: "IF26E", phone: "+6289531640037", courseKey: "pancasila" },
+        { id: "officer-09", name: "Deiva Alya", gender: "female", category: "Pengurus Kelas IF26E", role: "Koordinator Mata Kuliah - Kalkulus", group: "IF26E", phone: "+6289623024888", courseKey: "kalkulus" },
+        { id: "if26a-ketua", name: "Anis Risfiyah", gender: "female", category: "Pengurus Kelas IF26", role: "Ketua Kelas", group: "IF26A", phone: "+6281299412078", isLeader: true },
+        { id: "if26a-wakil", name: "Putri Nasya", gender: "female", category: "Pengurus Kelas IF26", role: "Wakil Kelas", group: "IF26A", phone: "+6285334782276", isLeader: true },
+        { id: "if26a-pancasila", name: "Ira Puspita", gender: "female", category: "Pengurus Kelas IF26", role: "Koordinator Mata Kuliah - Pendidikan Pancasila", group: "IF26A", phone: "+6287887976880" },
+        { id: "if26a-statistika", name: "Muhammad Isa Daud", gender: "male", category: "Pengurus Kelas IF26", role: "Koordinator Mata Kuliah - Statistika Probabilitas", group: "IF26A", phone: "+6288976547156" },
+        { id: "if26a-jaringan", name: "Himawan", gender: "male", category: "Pengurus Kelas IF26", role: "Koordinator Mata Kuliah - Jaringan Komputer", group: "IF26A", phone: "+6281386765519" },
+        { id: "if26a-kalkulus", name: "Mufid Syamsul", gender: "male", category: "Pengurus Kelas IF26", role: "Koordinator Mata Kuliah - Kalkulus", group: "IF26A", phone: "+62895324344369" },
+        { id: "if26a-pti-1", name: "Nia Maharani", gender: "female", category: "Pengurus Kelas IF26", role: "Koordinator Mata Kuliah - Pengantar Teknologi Informasi", group: "IF26A", phone: "+6281398724759" },
+        { id: "if26a-pti-2", name: "Alyssa Siti Muafy", gender: "female", category: "Pengurus Kelas IF26", role: "Koordinator Mata Kuliah - Pengantar Teknologi Informasi", group: "IF26A", phone: "+6285890056485" },
+        { id: "if26a-algoritma-teori", name: "Aulia Aisha", gender: "female", category: "Pengurus Kelas IF26", role: "Koordinator Mata Kuliah - Algoritma Teori", group: "IF26A", phone: "+6287898431861" },
+        { id: "if26a-algoritma-praktikum", name: "Noaf Hardian", gender: "male", category: "Pengurus Kelas IF26", role: "Koordinator Mata Kuliah - Algoritma Praktikum", group: "IF26A", phone: "+6285774107638" },
+        { id: "if26a-sistem-operasi", name: "Riki", gender: "male", category: "Pengurus Kelas IF26", role: "Koordinator Mata Kuliah - Sistem Operasi", group: "IF26A", phone: "+6285813315169" },
+        { id: "if26b-ketua", name: "BillRobert", gender: "male", category: "Pengurus Kelas IF26", role: "Ketua Kelas", group: "IF26B", phone: "+62 856-9176-2861", isLeader: true },
+        { id: "if26b-wakil", name: "Rafi", gender: "male", category: "Pengurus Kelas IF26", role: "Wakil Kelas", group: "IF26B", phone: "+62 895-1345-6478", isLeader: true },
+        { id: "if26b-pti", name: "Ahmad.F", gender: "male", category: "Pengurus Kelas IF26", role: "Koordinator Mata Kuliah - Pengantar Teknologi Informasi", group: "IF26B", phone: "+62 858-1325-4144" },
+        { id: "if26b-algoritma", name: "Fiqi", gender: "male", category: "Pengurus Kelas IF26", role: "Koordinator Mata Kuliah - Algoritma", group: "IF26B", phone: "+62 895-2538-8591" },
+        { id: "if26b-sistem-operasi", name: "Zaki", gender: "male", category: "Pengurus Kelas IF26", role: "Koordinator Mata Kuliah - Sistem Operasi", group: "IF26B", phone: "+62 831-9572-4550" },
+        { id: "if26b-statistika", name: "Dinda", gender: "female", category: "Pengurus Kelas IF26", role: "Koordinator Mata Kuliah - Statistika & Probabilitas", group: "IF26B", phone: "+62 857-8246-3416" },
+        { id: "if26b-jaringan", name: "Fachri Achmad", gender: "male", category: "Pengurus Kelas IF26", role: "Koordinator Mata Kuliah - Jaringan Komputer", group: "IF26B", phone: "+62 878-2414-5485" },
+        { id: "if26b-kalkulus", name: "Syita", gender: "female", category: "Pengurus Kelas IF26", role: "Koordinator Mata Kuliah - Kalkulus", group: "IF26B", phone: "+62 882-0174-76987" },
+        { id: "if26b-pancasila", name: "Seny", gender: "female", category: "Pengurus Kelas IF26", role: "Koordinator Mata Kuliah - Pendidikan Pancasila", group: "IF26B", phone: "+62 857-1748-7326" },
+        { id: "if26c-ketua", name: "Fadhil", gender: "male", category: "Pengurus Kelas IF26", role: "Ketua Kelas", group: "IF26C", phone: "+6285811231866", isLeader: true },
+        { id: "if26c-pti", name: "Nufus", gender: "female", category: "Pengurus Kelas IF26", role: "PJMK - Pengantar Teknologi Informasi", group: "IF26C", phone: "+62 815-6390-8930" },
+        { id: "if26c-algoritma-praktikum", name: "Rahma", gender: "female", category: "Pengurus Kelas IF26", role: "PJMK - Algoritma Praktikum", group: "IF26C", phone: "+62 895-6195-19074" },
+        { id: "if26c-algoritma-teori", name: "Cici", gender: "female", category: "Pengurus Kelas IF26", role: "PJMK - Algoritma Teori", group: "IF26C", phone: "+62 838-7258-0738" },
+        { id: "if26c-sistem-operasi", name: "Fathan", gender: "male", category: "Pengurus Kelas IF26", role: "PJMK - Sistem Operasi", group: "IF26C", phone: "+62 859-7920-4804" },
+        { id: "if26c-pancasila", name: "Damar", gender: "male", category: "Pengurus Kelas IF26", role: "PJMK - Pendidikan Pancasila", group: "IF26C", phone: "" },
+        { id: "if26c-jaringan", name: "Farhan", gender: "male", category: "Pengurus Kelas IF26", role: "PJMK - Jaringan Komputer", group: "IF26C", phone: "+6281915712078" },
+        { id: "if26c-statistika", name: "Nadin", gender: "female", category: "Pengurus Kelas IF26", role: "PJMK - Statistika", group: "IF26C", phone: "+6285591177011" },
+        { id: "if26c-kalkulus", name: "Santi", gender: "female", category: "Pengurus Kelas IF26", role: "PJMK - Kalkulus", group: "IF26C", phone: "+62 816-1422-207" },
+        { id: "if26d-ketua", name: "Putra", gender: "male", category: "Pengurus Kelas IF26", role: "Ketua Kelas", group: "IF26D", phone: "+62895-3628-71133", isLeader: true },
+        { id: "if26d-wakil", name: "Indra", gender: "male", category: "Pengurus Kelas IF26", role: "Wakil Kelas", group: "IF26D", phone: "+62858-8656-3586", isLeader: true },
+        { id: "if26d-algoritma", name: "Fery", gender: "male", category: "Pengurus Kelas IF26", role: "Koordinator Mata Kuliah - Algoritma", group: "IF26D", phone: "+62851-5770-2007" },
+        { id: "if26d-jaringan", name: "Widzaky", gender: "male", category: "Pengurus Kelas IF26", role: "Koordinator Mata Kuliah - Jaringan Komputer", group: "IF26D", phone: "+62812-9043-0112" },
+        { id: "if26d-kalkulus", name: "Mahdi", gender: "male", category: "Pengurus Kelas IF26", role: "Koordinator Mata Kuliah - Kalkulus", group: "IF26D", phone: "+62831-4810-2314" },
+        { id: "if26d-pancasila", name: "Fakhri", gender: "male", category: "Pengurus Kelas IF26", role: "Koordinator Mata Kuliah - Pendidikan Pancasila", group: "IF26D", phone: "+62858-0161-2464" },
+        { id: "if26d-pti", name: "Royan", gender: "male", category: "Pengurus Kelas IF26", role: "Koordinator Mata Kuliah - Pengantar Teknologi Informasi", group: "IF26D", phone: "+62877-2815-8794" },
+        { id: "if26d-sistem-operasi", name: "Zakiy Aditya", gender: "male", category: "Pengurus Kelas IF26", role: "Koordinator Mata Kuliah - Sistem Operasi", group: "IF26D", phone: "+62852-8024-2958" },
+        { id: "if26d-statistika", name: "Zahran", gender: "male", category: "Pengurus Kelas IF26", role: "Koordinator Mata Kuliah - Statistika & Probabilitas", group: "IF26D", phone: "+62896-4836-6134" }
+      ];
+      var lecturers = [
+        { name: "Ibu F…", role: "Pendidikan Pancasila", phone: "+62 813-1729-2728", courseKeys: ["pancasila"] },
+        { name: "Ibu N…", role: "Sistem Operasi & Algoritma Praktikum", phone: "+62 896-5083-8217", courseKeys: ["sistem-operasi", "algoritma"] },
+        { name: "Bapak A…", role: "Dosen Pengganti Pendidikan Pancasila (Sementara)", phone: "+62 815-1377-2933", courseKeys: ["pancasila"] },
+        { name: "Bapak A…", role: "Algoritma (Teori)", phone: "+62 856-8284-783", courseKeys: ["algoritma"] },
+        { name: "Bapak S…", role: "Jaringan Komputer (Teori & Praktikum)", phone: "+62 858-8735-3225", courseKeys: ["jaringan"] },
+        { name: "Ibu S…", role: "Kalkulus", phone: "+62 856-9441-8802", courseKeys: ["kalkulus"] },
+        { name: "Bapak T…", role: "Pengantar Teknologi Informasi", phone: "+62 812-9023-8939", courseKeys: ["pti"] },
+        { name: "Ibu D…", role: "Statistika dan Probabilitas", phone: "+62 857-1699-8818", courseKeys: ["statistika"] }
+      ];
+      var scheduleCourses = {
+        algoritmaPraktik: { code: "IF1260001", name: "Algoritma (Praktik)", room: "Lab" },
+        algoritmaTeori: { code: "IF1260001", name: "Algoritma (Teori)", room: "A301" },
+        pti: { code: "IF1260002", name: "Pengantar Teknologi Informasi", room: "A302" },
+        pancasila: { code: "UBPIF0002", name: "Pendidikan Pancasila", room: "A402" },
+        jaringanTeori: { code: "IF1260006", name: "Jaringan Komputer (Teori)", room: "A401" },
+        statistika: { code: "IF1260004", name: "Statistika & Probabilitas", room: "A302" },
+        sistemOperasi: { code: "IF1260005", name: "Sistem Operasi", room: "A401" },
+        kalkulus: { code: "IF1260003", name: "Kalkulus", room: "A301" },
+        jaringanPraktik: { code: "IF1260006", name: "Jaringan Komputer (Praktik)", room: "Lab" }
+      };
+      var scheduleLecturers = {
+        algoritmaPraktik: "Nurhayati, M.Kom",
+        algoritmaTeori: "Dr. Ahmad Fauzi, M. Kom",
+        pti: "Tatang Rohana, M. Kom., MM.",
+        pancasila: "Fitri Silvia Sofyan, M.Pd.",
+        jaringanTeori: {
+          IF26A: "Sutan Faisal, M. Kom.",
+          IF26B: "Sutan Faisal, M. Kom.",
+          IF26C: "Muhammad Naufal Bahreisy, M.Kom",
+          IF26D: "Muhammad Naufal Bahreisy, M.Kom",
+          IF26E: "Muhammad Naufal Bahreisy, M.Kom"
+        },
+        statistika: "Dwi S. K., M.Pd",
+        sistemOperasi: "Nurhayati, M.Kom",
+        kalkulus: "Santi Arum, P.L., M.Pd",
+        jaringanPraktik: {
+          IF26A: "Sutan Faisal, M. Kom.",
+          IF26B: "Sutan Faisal, M. Kom.",
+          IF26C: "Muhammad Naufal Bahreisy, M.Kom",
+          IF26D: "Muhammad Naufal Bahreisy, M.Kom",
+          IF26E: "Muhammad Naufal Bahreisy, M.Kom"
+        }
+      };
+      var scheduleOrders = {
+        IF26A: [["Senin", 1, "algoritmaPraktik"], ["Selasa", 1, "algoritmaTeori"], ["Selasa", 2, "pti"], ["Rabu", 1, "pancasila"], ["Rabu", 2, "jaringanTeori"], ["Kamis", 1, "statistika"], ["Kamis", 2, "sistemOperasi"], ["Jumat", 1, "kalkulus"], ["Jumat", 2, "jaringanPraktik"]],
+        IF26B: [["Senin", 2, "algoritmaPraktik"], ["Selasa", 1, "pti"], ["Selasa", 2, "algoritmaTeori"], ["Rabu", 1, "jaringanTeori"], ["Rabu", 2, "pancasila"], ["Kamis", 1, "sistemOperasi"], ["Kamis", 2, "statistika"], ["Jumat", 1, "jaringanPraktik"], ["Jumat", 2, "kalkulus"]],
+        IF26C: [["Senin", 2, "algoritmaPraktik"], ["Selasa", 1, "pti"], ["Selasa", 2, "algoritmaTeori"], ["Rabu", 1, "pancasila"], ["Rabu", 2, "jaringanTeori"], ["Kamis", 1, "sistemOperasi"], ["Kamis", 2, "statistika"], ["Jumat", 1, "jaringanPraktik"], ["Jumat", 2, "kalkulus"]],
+        IF26D: [["Senin", 1, "algoritmaPraktik"], ["Selasa", 1, "algoritmaTeori"], ["Selasa", 2, "pti"], ["Rabu", 1, "pancasila"], ["Rabu", 2, "jaringanTeori"], ["Kamis", 1, "sistemOperasi"], ["Kamis", 2, "statistika"], ["Jumat", 1, "kalkulus"], ["Jumat", 2, "jaringanPraktik"]],
+        IF26E: [["Senin", 2, "algoritmaPraktik"], ["Selasa", 1, "pti"], ["Selasa", 2, "algoritmaTeori"], ["Rabu", 1, "jaringanTeori"], ["Rabu", 2, "pancasila"], ["Kamis", 1, "statistika"], ["Kamis", 2, "sistemOperasi"], ["Jumat", 1, "jaringanPraktik"], ["Jumat", 2, "kalkulus"]]
+      };
+      var scheduleTimes = {
+        IF26A: ["09.00–10.40", "11.00–12.40"],
+        IF26B: ["09.00–10.40", "11.00–12.40"],
+        IF26C: ["13.00–14.40", "15.00–16.40"],
+        IF26D: ["18.15–19.55", "20.00–21.40"],
+        IF26E: ["18.15–19.55", "20.00–21.40"]
+      };
+      var activeCategory = "";
+      var activeClassGroup = "";
+      var list = document.getElementById("contactList");
+      var backgroundMusic = document.getElementById("backgroundMusic");
+      var musicToggle = document.getElementById("musicToggle");
+      var musicIsPlaying = false;
+
+      function updateMusicToggle(isPlaying) {
+        musicIsPlaying = isPlaying;
+        musicToggle.setAttribute("aria-pressed", isPlaying ? "true" : "false");
+        musicToggle.setAttribute("aria-label", isPlaying ? "Matikan musik" : "Nyalakan musik");
+        musicToggle.setAttribute("title", isPlaying ? "Matikan musik" : "Nyalakan musik");
+      }
+
+      function playBackgroundMusic() {
+        var playback = backgroundMusic.play();
+        updateMusicToggle(true);
+        if (playback) {
+          playback.catch(function (error) {
+            updateMusicToggle(false);
+            if (error.name === "NotAllowedError") {
+              console.info("Pemutaran otomatis diblokir browser. Tekan tombol speaker untuk menyalakan musik.");
+              return;
+            }
+            console.error("Tidak dapat memutar musik latar.", error);
+          });
+        }
+      }
+
+      musicToggle.addEventListener("click", function () {
+        if (musicIsPlaying) {
+          backgroundMusic.pause();
+          updateMusicToggle(false);
+          return;
+        }
+        playBackgroundMusic();
+      });
+
+      function updateClassSelector() {
+        document.querySelectorAll(".class-choice").forEach(function (button) {
+          button.hidden = button.hasAttribute("data-schedule-only") && activeCategory !== "Jadwal Mata Kuliah";
+          button.setAttribute("aria-pressed", button.getAttribute("data-class-group") === activeClassGroup ? "true" : "false");
+        });
+      }
+
+      function escapeHTML(value) {
+        return String(value || "").replace(/[&<>"']/g, function (char) {
+          return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char];
+        });
+      }
+
+      function portraitMarkup(gender) {
+        if (gender === "female") {
+          return '<svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect width="64" height="64" rx="14" fill="#f0ecf7"/><path d="M7 64c1-11 8-18 20-21l5-2 5 2c12 3 19 10 20 21" fill="#526a7c"/><path d="M12 64V31C12 14 20 5 32 5s20 9 20 26v33H12Z" fill="#76648f"/><path d="M21 25c0-10 4-16 11-16s11 6 11 16v11c0 8-5 13-11 13s-11-5-11-13V25Z" fill="#efc7a8"/><path d="M17 29c1-16 6-24 15-24s14 8 15 24c-6-1-11-4-15-9-4 5-9 8-15 9Z" fill="#76648f"/><path d="M22 33c1-1 3-1 4 0m12 0c1-1 3-1 4 0" fill="none" stroke="#463a45" stroke-width="1.5" stroke-linecap="round"/><path d="M31 35v4m-3 4c2 2 6 2 8 0" fill="none" stroke="#bd8178" stroke-width="1.3" stroke-linecap="round"/></svg>';
+        }
+        return '<svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect width="64" height="64" rx="14" fill="#eaf1f5"/><path d="M7 64c1-11 8-18 20-21l5-2 5 2c12 3 19 10 20 21" fill="#426d88"/><path d="M26 42h12v11l-6 4-6-4V42Z" fill="#e9b995"/><path d="M18 27c0-14 5-21 14-21s14 7 14 21v8c0 10-6 16-14 16s-14-6-14-16v-8Z" fill="#efc4a3"/><path d="M17 29c0-17 6-24 15-24s15 7 15 24c-6-1-12-5-15-10-4 6-9 9-15 10Z" fill="#303941"/><path d="M22 32c1-1 3-1 4 0m12 0c1-1 3-1 4 0" fill="none" stroke="#40383a" stroke-width="1.5" stroke-linecap="round"/><path d="M31 35v4m-3 4c2 2 6 2 8 0" fill="none" stroke="#b8776d" stroke-width="1.3" stroke-linecap="round"/></svg>';
+      }
+
+      function whatsappUrl(phone) {
+        var digits = String(phone || "").replace(/\D/g, "");
+        if (digits.length < 9 || /x/i.test(String(phone))) return "";
+        if (digits.indexOf("0") === 0) digits = "62" + digits.slice(1);
+        return "https://wa.me/" + digits;
+      }
+
+      var helpButton = document.getElementById("helpButton");
+      var helpContact = contacts.find(function (item) { return item.id === "officer-02"; });
+      var helpUrl = helpContact ? whatsappUrl(helpContact.phone) : "";
+      if (helpUrl) {
+        helpButton.href = helpUrl;
+        helpButton.hidden = false;
+      } else {
+        console.error("Nomor WhatsApp Yudha untuk bantuan belum tersedia.");
+      }
+
+      function render() {
+        var isSchedule = activeCategory === "Jadwal Mata Kuliah";
+        if (isSchedule) {
+          if (!activeClassGroup) {
+            list.innerHTML = '<div class="empty class-selection-empty"><h3>Pilih kelas</h3><p>Pilih IF26A sampai IF26E untuk melihat jadwal kuliahnya.</p></div>';
+            return;
+          }
+          var rows = scheduleOrders[activeClassGroup] || [];
+          var times = scheduleTimes[activeClassGroup];
+          var dayCounts = rows.reduce(function (counts, row) {
+            counts[row[0]] = (counts[row[0]] || 0) + 1;
+            return counts;
+          }, {});
+          var renderedDays = {};
+          var scheduleRows = rows.map(function (row) {
+            var course = scheduleCourses[row[2]];
+            var lecturer = scheduleLecturers[row[2]];
+            if (typeof lecturer !== "string") lecturer = lecturer[activeClassGroup];
+            var dayCell = "";
+            if (!renderedDays[row[0]]) {
+              dayCell = '<td class="schedule-day" rowspan="' + dayCounts[row[0]] + '">' + row[0] + '</td>';
+              renderedDays[row[0]] = true;
+            }
+            return '<tr>' + dayCell + '<td class="schedule-time">' + times[row[1] - 1] + '</td><td class="schedule-code">' + escapeHTML(course.code) + '</td><td>' + escapeHTML(course.name) + '</td><td class="schedule-lecturer">' + escapeHTML(lecturer) + '</td><td class="schedule-room">' + escapeHTML(course.room) + '</td></tr>';
+          }).join("");
+          list.innerHTML = '<div class="schedule-view"><p class="schedule-note">Jadwal semester ganjil 2026–2027 untuk ' + escapeHTML(activeClassGroup) + '.</p><div class="schedule-table-wrap"><table class="schedule-table"><thead><tr><th>Hari</th><th>Waktu</th><th>Kode</th><th>Mata Kuliah</th><th>Dosen</th><th>Ruang</th></tr></thead><tbody>' + scheduleRows + '</tbody></table></div></div>';
+          return;
+        }
+        var isClassDirectory = activeCategory === "Pengurus Kelas IF26";
+        if (isClassDirectory && !activeClassGroup) {
+          list.innerHTML = '<div class="empty class-selection-empty"><h3>Pilih kelas</h3><p>Pilih IF26A, IF26B, IF26C, atau IF26D untuk melihat daftar kontaknya.</p></div>';
+          return;
+        }
+
+        var filtered = contacts.filter(function (item) {
+          return item.category === activeCategory && (!isClassDirectory || item.group === activeClassGroup);
+        });
+
+        if (!filtered.length) {
+          list.innerHTML = '<div class="empty"><div class="empty-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.7"/><path d="M5 20c0-3.8 2.8-6 7-6s7 2.2 7 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div><h3>Belum ada kontak</h3><p>Daftar kontak untuk kategori ini belum ditambahkan.</p></div>';
+          return;
+        }
+
+        var isContactGrid = isClassDirectory || activeCategory === "Pengurus Kelas IF26E";
+        var previousGroup = "";
+        list.innerHTML = (isContactGrid
+          ? '<div class="contact-grid-wrap"><div class="contact-grid">'
+          : "") + filtered.map(function (item) {
+          var href = whatsappUrl(item.phone);
+          var isLecturer = item.category === "Dosen";
+          var isLeader = item.isLeader || item.id === "officer-01" || item.id === "officer-02";
+          var groupHeading = "";
+          if (isClassDirectory && item.group !== previousGroup) {
+            previousGroup = item.group;
+            groupHeading = '<h2 class="contact-group-heading">Kelas ' + escapeHTML(item.group) + '</h2>';
+          }
+          var personMeta = item.category === "Pengurus Kelas IF26" ? "Pengurus Kelas" : item.category;
+          var portrait = isClassDirectory ? "" : '<div class="avatar" aria-hidden="true">' + portraitMarkup(item.gender) + '</div>';
+          return groupHeading + '<article class="contact' + (isContactGrid ? " contact-card" : "") + (isContactGrid && isLeader ? " contact-card-leader" : "") + '">' +
+            '<div class="person">' + portrait + '<div style="min-width:0"><div class="person-name">' + escapeHTML(item.name) + '</div><div class="person-meta">' + escapeHTML(personMeta) + '</div></div></div>' +
+            '<div class="detail-block">' + (isLecturer ? '<div class="detail-label">Mata kuliah</div>' : '<div class="detail-label">Peran</div>') + '<div class="detail-value">' + escapeHTML(item.role) + '</div></div>' +
+            '<div class="contact-actions">' +
+            (href ? '<a class="wa-button" href="' + href + '" target="_blank" rel="noopener noreferrer" aria-label="Hubungi ' + escapeHTML(item.name) + ' di WhatsApp"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M20 11.6a8 8 0 0 1-11.8 7l-4.2 1.1 1.1-4.1A8 8 0 1 1 20 11.6Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m9 8.5 1.1 1.7-.7.8c.5 1 1.3 1.8 2.4 2.3l.7-.8 1.8.9c-.2 1.1-1 1.5-1.9 1.5-2.6-.4-5.3-3-5.7-5.6 0-.8.5-1.4 1.4-1.6" fill="currentColor"/></svg>WhatsApp</a>' : '<span class="wa-button disabled" aria-disabled="true">Nomor belum tersedia</span>') +
+            '</div>' +
+            (item.courseKey ? '<button class="lecturer-toggle" type="button" aria-haspopup="dialog" data-contact-id="' + escapeHTML(item.id) + '">Kontak Dosen Mata Kuliah</button>' : '') +
+            '</article>';
+        }).join("") + (isContactGrid ? "</div></div>" : "");
+      }
+
+      function openDirectory(category, title, subtitle) {
+        activeCategory = category;
+        activeClassGroup = "";
+        document.getElementById("contactTips").hidden = category === "Jadwal Mata Kuliah";
+        document.getElementById("classSelector").hidden = category !== "Pengurus Kelas IF26" && category !== "Jadwal Mata Kuliah";
+        updateClassSelector();
+        document.getElementById("homeView").hidden = true;
+        document.getElementById("assignmentsView").hidden = true;
+        document.getElementById("directoryView").hidden = false;
+        document.getElementById("topbar").hidden = false;
+        document.getElementById("headerHomeButton").hidden = false;
+        document.getElementById("directoryTitle").textContent = title || "Daftar Kontak " + category;
+        document.getElementById("directorySubtitle").textContent = subtitle || "";
+        document.querySelector(".class-selector-label").textContent = category === "Jadwal Mata Kuliah"
+          ? "Pilih kelas untuk membuka jadwal:"
+          : "Pilih kelas yang ingin dilihat:";
+        render();
+      }
+
+      var SUPABASE_URL = "https://dbkrodgnevwnokgremjz.supabase.co";
+      var SUPABASE_ANON_KEY = "sb_publishable_vAZ1GYe2T8LPns-nNPKrmQ_aveEpiM3";
+      var supabaseClient = null;
+      var uploadBucket = "if26e-tugas";
+
+      function setAssignmentStatus(id, message, isError) {
+        var element = document.getElementById(id);
+        element.textContent = message;
+        element.className = "assignment-status" + (isError ? " error" : "");
+      }
+
+      function renderAssignments(rows) {
+        var grouped = {};
+        rows.forEach(function (assignment) {
+          if (!scheduleCourses[assignment.course_key]) return;
+          if (!grouped[assignment.course_key]) grouped[assignment.course_key] = [];
+          grouped[assignment.course_key].push(assignment);
+        });
+        var markup = Object.keys(scheduleCourses).map(function (courseKey) {
+          var assignments = grouped[courseKey];
+          if (!assignments || !assignments.length) return "";
+          var course = scheduleCourses[courseKey];
+          return '<section class="assignment-course"><h2>' + escapeHTML(course.name) + '</h2><div class="assignment-cards">' +
+            assignments.map(function (assignment) {
+              var dueDate = assignment.due_date
+                ? new Date(assignment.due_date + "T00:00:00").toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
+                : "Tidak ada tenggat";
+              var fileUrl = supabaseClient.storage.from(uploadBucket).getPublicUrl(assignment.file_path).data.publicUrl;
+              return '<article class="assignment-card"><h3>' + escapeHTML(assignment.title) + '</h3>' +
+                (assignment.description ? '<p>' + escapeHTML(assignment.description) + '</p>' : '') +
+                '<div class="assignment-meta">Tenggat: ' + escapeHTML(dueDate) + '</div>' +
+                '<div class="assignment-card-actions"><a class="assignment-link" href="' + escapeHTML(fileUrl) + '" target="_blank" rel="noopener noreferrer">' +
+                  'Unduh ' + escapeHTML(assignment.file_name) + '</a></div></article>';
+            }).join("") + '</div></section>';
+        }).join("");
+        document.getElementById("assignmentFeed").innerHTML = markup ||
+          '<div class="empty"><h3>Belum ada tugas</h3><p>Tugas yang diunggah pengurus akan muncul di sini.</p></div>';
+      }
+
+      function loadAssignments() {
+        var feed = document.getElementById("assignmentFeed");
+        if (!supabaseClient) {
+          setAssignmentStatus("assignmentLoadStatus", "Fitur tugas belum terhubung. Isi publishable/anon key Supabase di index.html, lalu jalankan supabase-setup.sql.", true);
+          feed.innerHTML = "";
+          return;
+        }
+        setAssignmentStatus("assignmentLoadStatus", "Memuat daftar tugas…", false);
+        supabaseClient.from("if26e_assignments")
+          .select("id, course_key, title, description, due_date, file_path, file_name, created_at")
+          .order("due_date", { ascending: true })
+          .order("created_at", { ascending: false })
+          .then(function (result) {
+            if (result.error) {
+              console.error("Tidak dapat memuat daftar tugas.", result.error);
+              setAssignmentStatus("assignmentLoadStatus", "Daftar tugas gagal dimuat. Periksa konfigurasi Supabase dan kebijakan akses.", true);
+              feed.innerHTML = "";
+              return;
+            }
+            setAssignmentStatus("assignmentLoadStatus", "", false);
+            renderAssignments(result.data || []);
+          })
+          .catch(function (error) {
+            console.error("Kesalahan saat memuat daftar tugas.", error);
+            setAssignmentStatus("assignmentLoadStatus", "Terjadi kesalahan saat memuat daftar tugas. Coba muat ulang halaman.", true);
+            feed.innerHTML = "";
+          });
+      }
+
+      function renderHomeAnnouncements(rows) {
+        var list = document.getElementById("homeAnnouncementList");
+        if (!rows.length) {
+          list.innerHTML = "";
+          setAssignmentStatus("homeAnnouncementStatus", "Belum ada pengumuman tugas.", false);
+          return;
+        }
+        setAssignmentStatus("homeAnnouncementStatus", "", false);
+        list.innerHTML = rows.map(function (assignment) {
+          var dueDate = assignment.due_date
+            ? new Date(assignment.due_date + "T00:00:00").toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
+            : "";
+          return '<li class="home-announcement-item"><div>' +
+            '<span class="home-announcement-course">' + escapeHTML(assignment.course_name) + '</span>' +
+            '<button class="home-announcement-title" type="button">' + escapeHTML(assignment.title) + '</button></div>' +
+            (dueDate ? '<span class="home-announcement-due">Tenggat: ' + escapeHTML(dueDate) + '</span>' : '') +
+            '</li>';
+        }).join("");
+      }
+
+      function loadHomeAnnouncements() {
+        var list = document.getElementById("homeAnnouncementList");
+        if (!supabaseClient) {
+          list.innerHTML = "";
+          setAssignmentStatus("homeAnnouncementStatus", "Papan pengumuman belum terhubung.", true);
+          return;
+        }
+        setAssignmentStatus("homeAnnouncementStatus", "Memuat pengumuman…", false);
+        supabaseClient.from("if26e_assignments")
+          .select("title, course_name, due_date, created_at")
+          .order("created_at", { ascending: false })
+          .limit(5)
+          .then(function (result) {
+            if (result.error) {
+              console.error("Tidak dapat memuat papan pengumuman.", result.error);
+              list.innerHTML = "";
+              setAssignmentStatus("homeAnnouncementStatus", "Pengumuman gagal dimuat. Coba muat ulang halaman.", true);
+              return;
+            }
+            renderHomeAnnouncements(result.data || []);
+          })
+          .catch(function (error) {
+            console.error("Kesalahan saat memuat papan pengumuman.", error);
+            list.innerHTML = "";
+            setAssignmentStatus("homeAnnouncementStatus", "Pengumuman gagal dimuat. Coba muat ulang halaman.", true);
+          });
+      }
+
+      function openAssignments() {
+        activeCategory = "";
+        activeClassGroup = "";
+        updateClassSelector();
+        document.getElementById("homeView").hidden = true;
+        document.getElementById("directoryView").hidden = true;
+        document.getElementById("assignmentsView").hidden = false;
+        document.getElementById("topbar").hidden = false;
+        document.getElementById("headerHomeButton").hidden = false;
+        loadAssignments();
+      }
+
+      var supabaseConfigReady = SUPABASE_URL.indexOf("YOUR-PROJECT") === -1 &&
+        SUPABASE_ANON_KEY !== "YOUR_SUPABASE_ANON_OR_PUBLISHABLE_KEY";
+      if (supabaseConfigReady && window.supabase && window.supabase.createClient) {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      } else if (supabaseConfigReady) {
+        setAssignmentStatus("assignmentLoadStatus", "Library Supabase gagal dimuat. Periksa koneksi internet lalu muat ulang halaman.", true);
+      }
+      loadHomeAnnouncements();
+      window.setInterval(function () {
+        if (!document.getElementById("homeView").hidden) loadHomeAnnouncements();
+      }, 30000);
+
+      document.getElementById("assignmentsCard").addEventListener("click", openAssignments);
+      document.getElementById("viewAllAnnouncementsButton").addEventListener("click", openAssignments);
+      document.getElementById("homeAnnouncementList").addEventListener("click", function (event) {
+        if (event.target.closest(".home-announcement-title")) openAssignments();
+      });
+      function goHome() {
+        activeCategory = "";
+        activeClassGroup = "";
+        updateClassSelector();
+        document.getElementById("homeView").hidden = false;
+        document.getElementById("directoryView").hidden = true;
+        document.getElementById("assignmentsView").hidden = true;
+        document.getElementById("topbar").hidden = true;
+        document.getElementById("headerHomeButton").hidden = true;
+        loadHomeAnnouncements();
+      }
+
+      document.querySelectorAll(".category-card").forEach(function (card) {
+        card.addEventListener("click", function () {
+          if (card.id === "assignmentsCard") return;
+          openDirectory(card.getAttribute("data-category"), card.getAttribute("data-title"), card.getAttribute("data-subtitle"));
+        });
+      });
+      playBackgroundMusic();
+      document.getElementById("headerHomeButton").addEventListener("click", goHome);
+      document.getElementById("classSelector").addEventListener("click", function (event) {
+        var button = event.target.closest(".class-choice");
+        if (!button) return;
+        activeClassGroup = button.getAttribute("data-class-group");
+        updateClassSelector();
+        render();
+      });
+      var lecturerDialog = document.getElementById("lecturerDialog");
+      document.getElementById("closeLecturerDialog").addEventListener("click", function () {
+        lecturerDialog.close();
+      });
+      list.addEventListener("click", function (event) {
+        var button = event.target.closest(".lecturer-toggle");
+        if (!button) return;
+        var contact = contacts.find(function (item) { return item.id === button.getAttribute("data-contact-id"); });
+        if (!contact) return;
+        var relatedLecturers = lecturers.filter(function (item) {
+          return item.courseKeys.indexOf(contact.courseKey) !== -1;
+        });
+        var courseName = contact.role.replace("Koordinator Mata Kuliah - ", "");
+        var officerHref = whatsappUrl(contact.phone);
+        document.getElementById("lecturerDialogTitle").textContent = "Detail Koordinator Mata Kuliah";
+        document.getElementById("lecturerDialogContent").innerHTML =
+          '<div class="lecturer-dialog-officer"><div class="avatar" aria-hidden="true">' + portraitMarkup(contact.gender) + '</div>' +
+            '<div class="lecturer-dialog-officer-info"><div class="lecturer-dialog-label">Pengurus Kelas IF26E</div><div class="lecturer-dialog-officer-name">' + escapeHTML(contact.name) + '</div><div class="lecturer-dialog-officer-role">' + escapeHTML(contact.role) + '</div></div>' +
+            (officerHref ? '<a class="wa-button" href="' + officerHref + '" target="_blank" rel="noopener noreferrer" aria-label="Hubungi ' + escapeHTML(contact.name) + ' di WhatsApp">WhatsApp</a>' : '') +
+          '</div><section><h3 class="lecturer-dialog-section-title">Dosen Pengampu — ' + escapeHTML(courseName) + '</h3>' +
+          relatedLecturers.map(function (item) {
+            var href = whatsappUrl(item.phone);
+            return '<div class="lecturer-entry"><div class="lecturer-entry-name">Dosen Pengampu</div><div class="lecturer-entry-role">' + escapeHTML(item.role) + '</div>' +
+              (href ? '<a class="wa-button" href="' + href + '" target="_blank" rel="noopener noreferrer" aria-label="Hubungi Dosen Pengampu di WhatsApp">WhatsApp</a>' : '') +
+              '</div>';
+          }).join("") + '</section>';
+        lecturerDialog.showModal();
+      });
+    }());
+  </script>
+</body>
+</html>
