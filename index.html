@@ -63,6 +63,15 @@
     .music-toggle[aria-pressed="true"] .music-icon-on { display: block; }
     .music-toggle[aria-pressed="true"] .music-icon-off { display: none; }
     .music-toggle:focus-visible { outline: 3px solid rgba(39, 116, 81, .25); outline-offset: 3px; }
+    .admin-portal-button {
+      position: fixed; z-index: 20; top: 16px; right: 16px;
+      width: 40px; height: 40px; display: grid; place-items: center;
+      border: 1px solid #dfe8e0; border-radius: 13px; background: rgba(255, 255, 255, .95);
+      color: var(--green-dark); box-shadow: 0 8px 20px rgba(34, 57, 43, .12);
+      transition: transform .18s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease;
+    }
+    .admin-portal-button:hover { transform: translateY(-2px); border-color: #b6cdbb; box-shadow: 0 11px 24px rgba(34, 57, 43, .16); }
+    .admin-portal-button:focus-visible { outline: 3px solid rgba(39, 116, 81, .25); outline-offset: 3px; }
     .help-button {
       position: fixed; z-index: 20; left: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px));
       min-height: 48px; padding: 0 16px; display: inline-flex; align-items: center; gap: 9px;
@@ -411,6 +420,9 @@
 
     <main>
       <section class="home-view" id="homeView">
+        <a class="admin-portal-button" href="./admin.html" aria-label="Portal Admin Pengurus" title="Portal Admin Pengurus">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.3 2.8 7.7 7.5 9.5 4.7-1.8 7.5-5.2 7.5-9.5V6L12 3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="10" r="2.1" stroke="currentColor" stroke-width="1.7"/><path d="M8.5 16.5c.6-1.5 1.8-2.3 3.5-2.3s2.9.8 3.5 2.3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        </a>
         <div class="home-hero">
           <div class="eyebrow">Satu ruang, semua kontak</div>
           <h1>IF26E</h1>
