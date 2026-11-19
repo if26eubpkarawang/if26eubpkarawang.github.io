@@ -54,7 +54,7 @@
     .avatar img { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
     .account-chip strong, .account-chip small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .account-chip small { color: #e4f0e7; font-size: 11px; }
-    .portal-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; margin-bottom: 18px; padding: 8px; border: 1px solid var(--line); border-radius: 15px; background: rgba(255,255,255,.88); box-shadow: 0 8px 22px rgba(34, 57, 43, .05); }
+    .portal-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin-bottom: 18px; padding: 8px; border: 1px solid var(--line); border-radius: 15px; background: rgba(255,255,255,.88); box-shadow: 0 8px 22px rgba(34, 57, 43, .05); }
     .portal-tab { min-height: 44px; padding: 9px 12px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: #637168; font-size: 13px; font-weight: 750; }
     .portal-tab:hover { background: #f2f7f2; color: var(--green-dark); }
     .portal-tab[aria-current="page"] { border-color: #cfe0d1; background: linear-gradient(135deg, #e8f2eb, #f5faf6); color: var(--green-dark); box-shadow: 0 3px 8px rgba(39, 116, 81, .08); }
@@ -63,6 +63,7 @@
     .view-heading h2 { margin: 0; font-size: 21px; letter-spacing: -.03em; }
     .view-heading p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
     .announcement-list-heading { margin-top: 24px; }
+    .additional-upload { margin-top: 26px; padding-top: 24px; border-top: 1px solid var(--line); }
     .stats-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 18px 0; }
     .stat-card { min-width: 0; padding: 17px; border: 1px solid #e5ece5; border-radius: 15px; background: linear-gradient(145deg, #fff, #f7faf6); }
     .stat-card span { display: block; color: var(--muted); font-size: 12px; font-weight: 700; }
@@ -158,9 +159,8 @@
       </header>
       <nav class="portal-tabs" id="portalTabs" aria-label="Halaman admin">
         <button class="portal-tab" type="button" data-admin-view="overview" aria-current="page">Ringkasan</button>
-        <button class="portal-tab" type="button" data-admin-view="upload">Upload tugas</button>
+        <button class="portal-tab" type="button" data-admin-view="upload">Upload Tugas &amp; Pengumuman</button>
         <button class="portal-tab" type="button" data-admin-view="tasks">Kelola tugas</button>
-        <button class="portal-tab" type="button" data-admin-view="announcements">Pengumuman</button>
       </nav>
 
       <section class="admin-view card view-card" id="overviewView" aria-labelledby="overviewTitle">
@@ -176,9 +176,8 @@
           <div class="stat-card"><span>Status akun</span><strong>Aktif</strong></div>
         </div>
         <div class="quick-actions">
-          <button class="button primary" type="button" data-open-admin-view="upload">+ Upload tugas baru</button>
+          <button class="button primary" type="button" data-open-admin-view="upload">+ Upload tugas / pengumuman</button>
           <button class="button" type="button" data-open-admin-view="tasks">Lihat dan kelola tugas</button>
-          <button class="button" type="button" data-open-admin-view="announcements">+ Buat pengumuman</button>
         </div>
         <p class="status" id="dashboardLoadStatus" role="status" aria-live="polite"></p>
       </section>
@@ -186,11 +185,12 @@
       <section class="admin-view card view-card" id="uploadView" hidden aria-labelledby="uploadTitle">
         <header class="view-heading">
           <div>
-            <h2 id="uploadTitle">Upload tugas</h2>
-            <p>Pilih mata kuliah, lengkapi detail, lalu unggah file tugas.</p>
+            <h2 id="uploadTitle">Upload Tugas &amp; Pengumuman</h2>
+            <p>Formulir tugas dan pengumuman tersedia di halaman ini.</p>
           </div>
         </header>
         <section class="upload" id="uploadPanel" aria-label="Formulir upload tugas">
+          <h2>Upload tugas</h2>
           <form class="form-grid" id="uploadForm">
             <label class="field">Mata kuliah
               <select id="course" required></select>
@@ -213,31 +213,9 @@
             </div>
           </form>
         </section>
-      </section>
-
-      <section class="admin-view card view-card" id="tasksView" hidden aria-labelledby="tasksTitle">
-        <header class="view-heading">
-          <div>
-            <h2 id="tasksTitle">Kelola tugas</h2>
-            <p>Periksa file yang diunggah atau hapus tugas yang sudah tidak berlaku.</p>
-          </div>
-          <button class="button primary" type="button" data-open-admin-view="upload">+ Upload tugas</button>
-        </header>
-        <p class="status" id="loadStatus" role="status" aria-live="polite"></p>
-        <p class="status" id="deleteStatus" role="status" aria-live="polite"></p>
-        <div class="feed">
-          <div id="assignmentFeed" aria-live="polite"></div>
-        </div>
-      </section>
-
-      <section class="admin-view card view-card" id="announcementsView" hidden aria-labelledby="announcementsTitle">
-        <header class="view-heading">
-          <div>
-            <h2 id="announcementsTitle">Pengumuman &amp; Informasi</h2>
-            <p>Terbitkan informasi kelas yang dapat dibaca semua mahasiswa.</p>
-          </div>
-        </header>
-        <section class="upload" aria-label="Formulir pengumuman">
+        <section class="upload additional-upload" id="announcementPanel" aria-label="Formulir pengumuman">
+          <h2>Pengumuman &amp; Informasi</h2>
+          <p>Terbitkan informasi kelas yang dapat dibaca semua mahasiswa.</p>
           <form class="form-grid" id="announcementForm">
             <label class="field full">Judul
               <input id="announcementTitle" type="text" maxlength="120" required>
@@ -260,6 +238,21 @@
         <p class="status" id="announcementLoadStatus" role="status" aria-live="polite"></p>
         <p class="status" id="announcementDeleteStatus" role="status" aria-live="polite"></p>
         <div class="announcements" id="announcementFeed" aria-live="polite"></div>
+      </section>
+
+      <section class="admin-view card view-card" id="tasksView" hidden aria-labelledby="tasksTitle">
+        <header class="view-heading">
+          <div>
+            <h2 id="tasksTitle">Kelola tugas</h2>
+            <p>Periksa file yang diunggah atau hapus tugas yang sudah tidak berlaku.</p>
+          </div>
+          <button class="button primary" type="button" data-open-admin-view="upload">+ Upload tugas / pengumuman</button>
+        </header>
+        <p class="status" id="loadStatus" role="status" aria-live="polite"></p>
+        <p class="status" id="deleteStatus" role="status" aria-live="polite"></p>
+        <div class="feed">
+          <div id="assignmentFeed" aria-live="polite"></div>
+        </div>
       </section>
 
     </section>
@@ -440,8 +433,7 @@
         var viewIds = {
           overview: "overviewView",
           upload: "uploadView",
-          tasks: "tasksView",
-          announcements: "announcementsView"
+          tasks: "tasksView"
         };
         if (!viewIds[viewName] || !isAdmin) return;
         document.querySelectorAll(".admin-view").forEach(function (view) {
