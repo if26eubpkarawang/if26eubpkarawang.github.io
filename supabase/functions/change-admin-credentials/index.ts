@@ -90,6 +90,10 @@ Deno.serve(async (request: Request): Promise<Response> => {
     const userClient = createClient(supabaseUrl, publishableKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
+    const membershipClient = createClient(supabaseUrl, publishableKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+      global: { headers: { Authorization: "Bearer " + accessToken } },
+    });
     const adminClient = createClient(supabaseUrl, secretKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
@@ -103,7 +107,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
       return jsonResponse(403, "Akun ini tidak memakai format login portal IF26E.");
     }
 
-    const { data: membership, error: membershipError } = await adminClient
+    const { data: membership, error: membershipError } = await membershipClient
       .from("if26e_admins")
       .select("user_id")
       .eq("user_id", user.id)
