@@ -63,6 +63,15 @@
     .music-toggle[aria-pressed="true"] .music-icon-on { display: block; }
     .music-toggle[aria-pressed="true"] .music-icon-off { display: none; }
     .music-toggle:focus-visible { outline: 3px solid rgba(39, 116, 81, .25); outline-offset: 3px; }
+    .admin-portal-button {
+      position: fixed; z-index: 20; top: 16px; right: 16px;
+      width: 40px; height: 40px; display: grid; place-items: center;
+      border: 1px solid #dfe8e0; border-radius: 13px; background: rgba(255, 255, 255, .95);
+      color: var(--green-dark); box-shadow: 0 8px 20px rgba(34, 57, 43, .12);
+      transition: transform .18s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease;
+    }
+    .admin-portal-button:hover { transform: translateY(-2px); border-color: #b6cdbb; box-shadow: 0 11px 24px rgba(34, 57, 43, .16); }
+    .admin-portal-button:focus-visible { outline: 3px solid rgba(39, 116, 81, .25); outline-offset: 3px; }
     .help-button {
       position: fixed; z-index: 20; left: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px));
       min-height: 48px; padding: 0 16px; display: inline-flex; align-items: center; gap: 9px;
@@ -336,6 +345,7 @@
     }
     .assignment-status { margin: 12px 0 0; color: #68776d; font-size: 13px; }
     .assignment-status.error { color: #a33b35; }
+    .assignment-status.warning { color: #91600e; }
     .assignment-feed { padding: 0 22px 24px; }
     .assignment-course + .assignment-course { margin-top: 26px; }
     .assignment-course h2 { margin: 0 0 12px; color: var(--green-dark); font-size: 17px; }
@@ -411,6 +421,9 @@
 
     <main>
       <section class="home-view" id="homeView">
+        <a class="admin-portal-button" href="./admin.html" aria-label="Portal Admin Pengurus" title="Portal Admin Pengurus">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.3 2.8 7.7 7.5 9.5 4.7-1.8 7.5-5.2 7.5-9.5V6L12 3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="10" r="2.1" stroke="currentColor" stroke-width="1.7"/><path d="M8.5 16.5c.6-1.5 1.8-2.3 3.5-2.3s2.9.8 3.5 2.3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        </a>
         <div class="home-hero">
           <div class="eyebrow">Satu ruang, semua kontak</div>
           <h1>IF26E</h1>
@@ -473,9 +486,6 @@
         <div class="directory-heading">
           <h1 class="directory-title">Tugas Mata Kuliah</h1>
           <p class="directory-subtitle">Daftar tugas IF26E yang diunggah pengurus kelas.</p>
-          <div class="assignment-toolbar">
-            <a class="assignment-button" href="./admin.html">Halaman Admin Pengurus</a>
-          </div>
         </div>
         <p class="assignment-status" id="assignmentLoadStatus" role="status" aria-live="polite"></p>
         <div class="assignment-feed" id="assignmentFeed" aria-live="polite"></div>
@@ -790,10 +800,37 @@
       var supabaseClient = null;
       var uploadBucket = "if26e-tugas";
 
-      function setAssignmentStatus(id, message, isError) {
+      function setAssignmentStatus(id, message, isError, isWarning) {
         var element = document.getElementById(id);
         element.textContent = message;
-        element.className = "assignment-status" + (isError ? " error" : "");
+        element.className = "assignment-status" + (isError ? " error" : isWarning ? " warning" : "");
+      }
+
+      function isMissingUploaderColumn(error) {
+        return !!error &&
+          (error.code === "42703" || error.code === "PGRST204") &&
+          /uploaded_by_name/i.test(error.message || "");
+      }
+
+      function fetchAssignments(includeUploader) {
+        var columns = "id, course_key, title, description, due_date, file_path, file_name, created_at";
+        if (includeUploader) columns += ", uploaded_by_name";
+        return supabaseClient.from("if26e_assignments")
+          .select(columns)
+          .order("due_date", { ascending: true })
+          .order("created_at", { ascending: false });
+      }
+
+      function fetchAssignmentsWithUploader() {
+        return fetchAssignments(true).then(function (result) {
+          if (!result.error || !isMissingUploaderColumn(result.error)) {
+            return { result: result, uploaderAvailable: true };
+          }
+          console.warn("Kolom nama pengunggah belum ada; daftar tugas dimuat tanpa nama sampai migrasi diterapkan.", result.error);
+          return fetchAssignments(false).then(function (fallbackResult) {
+            return { result: fallbackResult, uploaderAvailable: false };
+          });
+        });
       }
 
       function renderAssignments(rows) {
@@ -815,6 +852,7 @@
               var fileUrl = supabaseClient.storage.from(uploadBucket).getPublicUrl(assignment.file_path).data.publicUrl;
               return '<article class="assignment-card"><h3>' + escapeHTML(assignment.title) + '</h3>' +
                 (assignment.description ? '<p>' + escapeHTML(assignment.description) + '</p>' : '') +
+                '<div class="assignment-meta">Diunggah oleh: ' + escapeHTML(assignment.uploaded_by_name || "Nama belum tercatat") + '</div>' +
                 '<div class="assignment-meta">Tenggat: ' + escapeHTML(dueDate) + '</div>' +
                 '<div class="assignment-card-actions"><a class="assignment-link" href="' + escapeHTML(fileUrl) + '" target="_blank" rel="noopener noreferrer">' +
                   'Unduh ' + escapeHTML(assignment.file_name) + '</a></div></article>';
@@ -832,18 +870,20 @@
           return;
         }
         setAssignmentStatus("assignmentLoadStatus", "Memuat daftar tugas…", false);
-        supabaseClient.from("if26e_assignments")
-          .select("id, course_key, title, description, due_date, file_path, file_name, created_at")
-          .order("due_date", { ascending: true })
-          .order("created_at", { ascending: false })
-          .then(function (result) {
+        fetchAssignmentsWithUploader()
+          .then(function (assignmentResult) {
+            var result = assignmentResult.result;
             if (result.error) {
               console.error("Tidak dapat memuat daftar tugas.", result.error);
               setAssignmentStatus("assignmentLoadStatus", "Daftar tugas gagal dimuat. Periksa konfigurasi Supabase dan kebijakan akses.", true);
               feed.innerHTML = "";
               return;
             }
-            setAssignmentStatus("assignmentLoadStatus", "", false);
+            setAssignmentStatus("assignmentLoadStatus", assignmentResult.uploaderAvailable
+              ? ""
+              : "Tugas dimuat, tetapi nama pengunggah belum tersedia. Migrasi Supabase diperlukan.",
+            false,
+            !assignmentResult.uploaderAvailable);
             renderAssignments(result.data || []);
           })
           .catch(function (error) {
@@ -868,6 +908,7 @@
           return '<li class="home-announcement-item"><div>' +
             '<span class="home-announcement-course">' + escapeHTML(assignment.course_name) + '</span>' +
             '<button class="home-announcement-title" type="button">' + escapeHTML(assignment.title) + '</button></div>' +
+            '<span class="home-announcement-due">Diunggah oleh: ' + escapeHTML(assignment.uploaded_by_name || "Nama belum tercatat") + '</span>' +
             (dueDate ? '<span class="home-announcement-due">Tenggat: ' + escapeHTML(dueDate) + '</span>' : '') +
             '</li>';
         }).join("");
@@ -882,11 +923,23 @@
         }
         setAssignmentStatus("homeAnnouncementStatus", "Memuat pengumuman…", false);
         supabaseClient.from("if26e_assignments")
-          .select("title, course_name, due_date, created_at")
+          .select("title, course_name, due_date, uploaded_by_name, created_at")
           .order("created_at", { ascending: false })
           .limit(5)
           .then(function (result) {
             if (result.error) {
+              if (isMissingUploaderColumn(result.error)) {
+                console.warn("Kolom nama pengunggah belum ada; papan pengumuman dimuat tanpa nama sampai migrasi diterapkan.", result.error);
+                return supabaseClient.from("if26e_assignments")
+                  .select("title, course_name, due_date, created_at")
+                  .order("created_at", { ascending: false })
+                  .limit(5)
+                  .then(function (fallbackResult) {
+                    if (fallbackResult.error) throw fallbackResult.error;
+                    renderHomeAnnouncements(fallbackResult.data || []);
+                    setAssignmentStatus("homeAnnouncementStatus", "Pengumuman dimuat, tetapi nama pengunggah belum tersedia. Migrasi Supabase diperlukan.", false, true);
+                  });
+              }
               console.error("Tidak dapat memuat papan pengumuman.", result.error);
               list.innerHTML = "";
               setAssignmentStatus("homeAnnouncementStatus", "Pengumuman gagal dimuat. Coba muat ulang halaman.", true);
