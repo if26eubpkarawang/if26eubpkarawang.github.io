@@ -1,0 +1,4 @@
+project_id = "dbkrodgnevwnokgremjz"
+
+[functions.change-admin-credentials]
+verify_jwt = true
