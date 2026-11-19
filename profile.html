@@ -43,6 +43,13 @@
     .credential-section h2 { margin: 0 0 5px; font-size: 19px; letter-spacing: -.025em; }
     .credential-section > p { margin: 0 0 16px; color: #68776d; font-size: 13px; }
     .credential-actions { margin-top: 14px; }
+    .profile-photo-panel { display: flex; align-items: center; gap: 18px; margin: 0 0 24px; padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: #f9fbf8; }
+    .profile-photo-preview { position: relative; width: 88px; height: 88px; flex: 0 0 88px; display: grid; place-items: center; overflow: hidden; border-radius: 50%; background: #f2bf57; color: #284735; font-size: 24px; font-weight: 900; }
+    .profile-photo-preview img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .profile-photo-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .profile-photo-copy h2 { margin: 0 0 4px; font-size: 18px; }
+    .profile-photo-copy p { margin: 0 0 10px; color: #68776d; font-size: 13px; }
+    .profile-photo-status { margin: 8px 0 0; }
     .login-prompt { padding: 18px; border: 1px solid #e0ebe2; border-radius: 14px; background: #f8faf7; }
     .login-prompt p { margin: 0 0 12px; color: #526158; }
     [hidden] { display: none !important; }
@@ -53,6 +60,8 @@
       .heading, .content { padding: 20px; }
       .form-grid { grid-template-columns: 1fr; }
       .field.full { grid-column: auto; }
+      .profile-photo-panel { align-items: flex-start; gap: 13px; padding: 13px; }
+      .profile-photo-preview { width: 70px; height: 70px; flex-basis: 70px; }
     }
   </style>
 </head>
@@ -80,6 +89,22 @@
       <div class="content">
         <p class="status" id="profileStatus" role="status" aria-live="polite">Memeriksa sesi admin…</p>
         <section id="profileContent" hidden>
+          <section class="profile-photo-panel" aria-labelledby="profilePhotoTitle">
+            <div class="profile-photo-preview">
+              <span id="profilePhotoInitials" aria-hidden="true">IF</span>
+              <img id="profilePhotoImage" alt="Foto profil admin" hidden>
+            </div>
+            <div class="profile-photo-copy">
+              <h2 id="profilePhotoTitle">Foto profil</h2>
+              <p>JPG, PNG, atau WebP, maksimal 2 MB. Foto yang diunggah dapat dilihat publik.</p>
+              <div class="profile-photo-controls">
+                <button class="button" id="chooseProfilePhotoButton" type="button">Pilih foto</button>
+                <input id="profilePhotoFile" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+                <button class="button primary" id="saveProfilePhotoButton" type="button" disabled>Simpan foto</button>
+              </div>
+              <p class="status profile-photo-status" id="profilePhotoStatus" role="status" aria-live="polite"></p>
+            </div>
+          </section>
           <form id="profileForm">
             <div class="form-grid">
               <label class="field full">Nama tampilan
@@ -144,6 +169,9 @@
       "use strict";
       var SUPABASE_URL = "https://dbkrodgnevwnokgremjz.supabase.co";
       var SUPABASE_ANON_KEY = "sb_publishable_vAZ1GYe2T8LPns-nNPKrmQ_aveEpiM3";
+      var AVATAR_BUCKET = "if26e-admin-avatars";
+      var MAX_AVATAR_SIZE = 2 * 1024 * 1024;
+      var allowedAvatarTypes = ["image/jpeg", "image/png", "image/webp"];
       var supabaseClient = window.supabase && window.supabase.createClient
         ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
         : null;
@@ -152,6 +180,12 @@
         saveStatus: document.getElementById("saveStatus"),
         profileContent: document.getElementById("profileContent"),
         loginPrompt: document.getElementById("loginPrompt"),
+        profilePhotoInitials: document.getElementById("profilePhotoInitials"),
+        profilePhotoImage: document.getElementById("profilePhotoImage"),
+        profilePhotoFile: document.getElementById("profilePhotoFile"),
+        profilePhotoStatus: document.getElementById("profilePhotoStatus"),
+        chooseProfilePhotoButton: document.getElementById("chooseProfilePhotoButton"),
+        saveProfilePhotoButton: document.getElementById("saveProfilePhotoButton"),
         profileForm: document.getElementById("profileForm"),
         profileName: document.getElementById("profileName"),
         profileUserId: document.getElementById("profileUserId"),
@@ -171,6 +205,8 @@
       };
       var currentUser = null;
       var isAdmin = false;
+      var selectedAvatarFile = null;
+      var avatarPreviewUrl = null;
 
       function setStatus(element, message, state) {
         element.textContent = message;
@@ -181,6 +217,45 @@
         var email = user && user.email ? user.email.toLowerCase() : "";
         var suffix = "@if26e.invalid";
         return email.slice(-suffix.length) === suffix ? email.slice(0, -suffix.length) : email;
+      }
+
+      function getInitials(value) {
+        return String(value || "IF").trim().split(/\s+/).slice(0, 2).map(function (part) {
+          return part.charAt(0);
+        }).join("").toUpperCase() || "IF";
+      }
+
+      function setProfilePhoto(user) {
+        var metadata = user.user_metadata || {};
+        var displayName = metadata.full_name || metadata.name || getUserId(user);
+        elements.profilePhotoInitials.textContent = getInitials(displayName);
+        elements.profilePhotoInitials.hidden = false;
+        elements.profilePhotoImage.hidden = true;
+        elements.profilePhotoImage.removeAttribute("src");
+        elements.profilePhotoImage.onload = function () {
+          elements.profilePhotoImage.hidden = false;
+          elements.profilePhotoInitials.hidden = true;
+        };
+        elements.profilePhotoImage.onerror = function () {
+          elements.profilePhotoImage.hidden = true;
+          elements.profilePhotoInitials.hidden = false;
+        };
+
+        var expectedPath = user.id + "/avatar";
+        if (metadata.avatar_path !== expectedPath) return;
+        var publicUrl = supabaseClient.storage.from(AVATAR_BUCKET).getPublicUrl(expectedPath).data.publicUrl;
+        var version = metadata.avatar_updated_at || "1";
+        elements.profilePhotoImage.src = publicUrl + "?v=" + encodeURIComponent(version);
+      }
+
+      function clearAvatarSelection() {
+        selectedAvatarFile = null;
+        elements.profilePhotoFile.value = "";
+        elements.saveProfilePhotoButton.disabled = true;
+        setStatus(elements.profilePhotoStatus, "", "");
+        if (avatarPreviewUrl) URL.revokeObjectURL(avatarPreviewUrl);
+        avatarPreviewUrl = null;
+        if (currentUser) setProfilePhoto(currentUser);
       }
 
       function showLoginPrompt(message, isError) {
@@ -200,6 +275,7 @@
           user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name) ||
           getUserId(user) || "Pengurus IF26E"
         ).trim();
+        setProfilePhoto(user);
         elements.profileUserId.value = getUserId(user);
         elements.credentialUserId.value = getUserId(user);
         elements.profileEmail.value = user.email || "";
@@ -227,6 +303,87 @@
             showProfile(session.user);
           });
       }
+
+      elements.chooseProfilePhotoButton.addEventListener("click", function () {
+        elements.profilePhotoFile.click();
+      });
+
+      elements.profilePhotoFile.addEventListener("change", function () {
+        var file = elements.profilePhotoFile.files && elements.profilePhotoFile.files[0];
+        if (!file) {
+          clearAvatarSelection();
+          return;
+        }
+        if (allowedAvatarTypes.indexOf(file.type) === -1) {
+          clearAvatarSelection();
+          setStatus(elements.profilePhotoStatus, "Pilih file JPG, PNG, atau WebP.", "error");
+          return;
+        }
+        if (file.size > MAX_AVATAR_SIZE) {
+          clearAvatarSelection();
+          setStatus(elements.profilePhotoStatus, "Ukuran foto maksimal 2 MB.", "error");
+          return;
+        }
+
+        selectedAvatarFile = file;
+        if (avatarPreviewUrl) URL.revokeObjectURL(avatarPreviewUrl);
+        avatarPreviewUrl = URL.createObjectURL(file);
+        elements.profilePhotoInitials.hidden = true;
+        elements.profilePhotoImage.hidden = false;
+        elements.profilePhotoImage.src = avatarPreviewUrl;
+        elements.saveProfilePhotoButton.disabled = false;
+        setStatus(elements.profilePhotoStatus, "Foto siap disimpan.", "");
+      });
+
+      elements.saveProfilePhotoButton.addEventListener("click", function () {
+        if (!isAdmin || !supabaseClient || !currentUser || !selectedAvatarFile) {
+          setStatus(elements.profilePhotoStatus, "Pilih foto dan pastikan Anda login sebagai admin.", "error");
+          return;
+        }
+
+        var file = selectedAvatarFile;
+        var path = currentUser.id + "/avatar";
+        var uploadCompleted = false;
+        elements.saveProfilePhotoButton.disabled = true;
+        elements.profilePhotoFile.disabled = true;
+        setStatus(elements.profilePhotoStatus, "Mengunggah foto profil…", "");
+        supabaseClient.storage.from(AVATAR_BUCKET)
+          .upload(path, file, { cacheControl: "0", contentType: file.type, upsert: true })
+          .then(function (result) {
+            if (result.error) throw result.error;
+            uploadCompleted = true;
+            var updatedAt = new Date().toISOString();
+            return supabaseClient.auth.updateUser({
+              data: { avatar_path: path, avatar_updated_at: updatedAt }
+            });
+          })
+          .then(function (result) {
+            if (result.error) throw result.error;
+            if (!result.data || !result.data.user) throw new Error("Respons profil tidak tersedia.");
+            currentUser = result.data.user;
+            selectedAvatarFile = null;
+            elements.profilePhotoFile.value = "";
+            elements.saveProfilePhotoButton.disabled = true;
+            if (avatarPreviewUrl) URL.revokeObjectURL(avatarPreviewUrl);
+            avatarPreviewUrl = null;
+            showProfile(currentUser);
+            setStatus(elements.profilePhotoStatus, "Foto profil berhasil diperbarui.", "success");
+          })
+          .catch(function (error) {
+            console.error("Foto profil admin gagal diperbarui.", error);
+            setStatus(
+              elements.profilePhotoStatus,
+              uploadCompleted
+                ? "Foto terunggah, tetapi profil belum diperbarui. Coba simpan lagi."
+                : "Foto gagal diunggah. Periksa koneksi lalu coba lagi.",
+              "error"
+            );
+          })
+          .then(function () {
+            elements.profilePhotoFile.disabled = false;
+            if (selectedAvatarFile) elements.saveProfilePhotoButton.disabled = false;
+          });
+      });
 
       elements.profileForm.addEventListener("submit", function (event) {
         event.preventDefault();
