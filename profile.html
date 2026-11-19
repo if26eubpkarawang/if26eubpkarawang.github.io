@@ -38,6 +38,7 @@
     .field input[readonly] { background: #f4f7f4; color: #68776d; }
     .form-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 5px; }
     .form-actions .status { margin: 0; }
+    .credential-toggle { margin-top: 20px; }
     .credential-section { margin-top: 26px; padding-top: 23px; border-top: 1px solid var(--line); }
     .credential-section h2 { margin: 0 0 5px; font-size: 19px; letter-spacing: -.025em; }
     .credential-section > p { margin: 0 0 16px; color: #68776d; font-size: 13px; }
@@ -102,7 +103,10 @@
               </div>
             </div>
           </form>
-          <section class="credential-section" aria-labelledby="credentialTitle">
+          <div class="form-actions credential-toggle">
+            <button class="button primary" id="toggleCredentialsButton" type="button" aria-expanded="false" aria-controls="credentialSection">Ubah User ID</button>
+          </div>
+          <section id="credentialSection" class="credential-section" aria-labelledby="credentialTitle" hidden>
             <h2 id="credentialTitle">Ubah User ID dan password</h2>
             <p>Perubahan hanya berlaku untuk akun admin Anda. Masukkan password saat ini untuk mengonfirmasi; password baru harus 12–128 karakter.</p>
             <form id="credentialForm">
@@ -154,6 +158,8 @@
         profileEmail: document.getElementById("profileEmail"),
         profileCreatedAt: document.getElementById("profileCreatedAt"),
         saveProfileButton: document.getElementById("saveProfileButton"),
+        toggleCredentialsButton: document.getElementById("toggleCredentialsButton"),
+        credentialSection: document.getElementById("credentialSection"),
         credentialForm: document.getElementById("credentialForm"),
         credentialUserId: document.getElementById("credentialUserId"),
         currentPassword: document.getElementById("currentPassword"),
@@ -245,6 +251,13 @@
           .then(function () {
             elements.saveProfileButton.disabled = false;
           });
+      });
+
+      elements.toggleCredentialsButton.addEventListener("click", function () {
+        var isOpening = elements.credentialSection.hidden;
+        elements.credentialSection.hidden = !isOpening;
+        elements.toggleCredentialsButton.setAttribute("aria-expanded", String(isOpening));
+        elements.toggleCredentialsButton.textContent = isOpening ? "Tutup formulir" : "Ubah User ID";
       });
 
       function getCredentialErrorMessage(error) {
