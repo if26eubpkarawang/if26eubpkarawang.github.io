@@ -47,7 +47,7 @@
     .portal-header .eyebrow { color: #d9efdf; }
     .portal-header h1 { font-size: clamp(25px, 4vw, 34px); }
     .portal-header .subtitle { color: #e4f0e7; }
-    .account-chip { display: flex; align-items: center; gap: 11px; max-width: 260px; padding: 9px 13px 9px 9px; border: 1px solid rgba(255,255,255,.32); border-radius: 15px; background: rgba(255,255,255,.13); color: inherit; cursor: pointer; font: inherit; text-align: left; }
+    .account-chip { display: flex; align-items: center; gap: 11px; max-width: 260px; padding: 9px 13px 9px 9px; border: 1px solid rgba(255,255,255,.32); border-radius: 15px; background: rgba(255,255,255,.13); color: inherit; cursor: pointer; font: inherit; text-align: left; text-decoration: none; }
     .account-chip:hover { background: rgba(255,255,255,.2); }
     .account-chip:focus-visible { outline: 3px solid rgba(255,255,255,.75); outline-offset: 3px; }
     .avatar { width: 42px; height: 42px; flex: 0 0 42px; display: grid; place-items: center; border-radius: 13px; background: #f2bf57; color: #284735; font-size: 15px; font-weight: 900; }
@@ -145,10 +145,10 @@
           <h1>Portal Admin IF26E</h1>
           <p class="subtitle">Kelola tugas kelas dengan lebih mudah.</p>
         </div>
-        <button class="account-chip" type="button" data-open-admin-view="profile" aria-label="Buka profil admin">
+        <a class="account-chip" href="./profile.html" aria-label="Buka profil admin">
           <span class="avatar" id="profileAvatar" aria-hidden="true">IF</span>
           <span><strong id="profileSummaryName">Pengurus IF26E</strong><small id="profileSummaryUserId"></small></span>
-        </button>
+        </a>
       </header>
       <nav class="portal-tabs" id="portalTabs" aria-label="Halaman admin">
         <button class="portal-tab" type="button" data-admin-view="overview" aria-current="page">Ringkasan</button>
@@ -222,37 +222,6 @@
         </div>
       </section>
 
-      <section class="admin-view card view-card" id="profileView" hidden aria-labelledby="profileTitle">
-        <header class="view-heading">
-          <div>
-            <h2 id="profileTitle">Biodata profil admin</h2>
-            <p>Nama tampilan disimpan pada profil akun Anda.</p>
-          </div>
-        </header>
-        <form class="form-wrap" id="profileForm">
-          <div class="form-grid">
-            <label class="field full">Nama tampilan
-              <input id="profileName" type="text" maxlength="80" autocomplete="name" required>
-            </label>
-            <label class="field">User ID
-              <input id="profileUserId" type="text" readonly>
-            </label>
-            <label class="field">Email akun
-              <input id="profileEmail" type="text" readonly>
-            </label>
-            <label class="field">Peran
-              <input type="text" value="Admin Pengurus IF26E" readonly>
-            </label>
-            <label class="field">Akun dibuat
-              <input id="profileCreatedAt" type="text" readonly>
-            </label>
-            <div class="field full">
-              <button class="button primary" id="saveProfileButton" type="submit">Simpan biodata</button>
-              <p class="status" id="profileStatus" role="status" aria-live="polite"></p>
-            </div>
-          </div>
-        </form>
-      </section>
     </section>
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -294,15 +263,9 @@
         uploadButton: document.getElementById("uploadButton"),
         course: document.getElementById("course"),
         assignmentFeed: document.getElementById("assignmentFeed"),
-        profileForm: document.getElementById("profileForm"),
-        profileName: document.getElementById("profileName"),
-        profileUserId: document.getElementById("profileUserId"),
-        profileEmail: document.getElementById("profileEmail"),
-        profileCreatedAt: document.getElementById("profileCreatedAt"),
         profileAvatar: document.getElementById("profileAvatar"),
         profileSummaryName: document.getElementById("profileSummaryName"),
         profileSummaryUserId: document.getElementById("profileSummaryUserId"),
-        saveProfileButton: document.getElementById("saveProfileButton"),
         taskCount: document.getElementById("taskCount"),
         courseCount: document.getElementById("courseCount")
       };
@@ -358,7 +321,7 @@
         return email.slice(-suffix.length) === suffix ? email.slice(0, -suffix.length) : email;
       }
 
-      function populateProfile(user) {
+      function populateAccountSummary(user) {
         if (!user) return;
         var userId = getUserId(user);
         var metadata = user.user_metadata || {};
@@ -366,12 +329,6 @@
         var initials = displayName.split(/\s+/).slice(0, 2).map(function (part) {
           return part.charAt(0);
         }).join("").toUpperCase() || "IF";
-        elements.profileName.value = displayName;
-        elements.profileUserId.value = userId;
-        elements.profileEmail.value = user.email || "";
-        elements.profileCreatedAt.value = user.created_at
-          ? new Date(user.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
-          : "Tidak tersedia";
         elements.profileAvatar.textContent = initials;
         elements.profileSummaryName.textContent = displayName;
         elements.profileSummaryUserId.textContent = "@" + userId;
@@ -381,8 +338,7 @@
         var viewIds = {
           overview: "overviewView",
           upload: "uploadView",
-          tasks: "tasksView",
-          profile: "profileView"
+          tasks: "tasksView"
         };
         if (!viewIds[viewName] || !isAdmin) return;
         document.querySelectorAll(".admin-view").forEach(function (view) {
@@ -413,7 +369,7 @@
         elements.sessionStatus.textContent = "";
         elements.password.value = "";
         if (enabled) {
-          populateProfile(currentUser);
+          populateAccountSummary(currentUser);
           showAdminView("overview");
           loadAssignments();
         } else {
@@ -639,32 +595,6 @@
           console.error("Kesalahan saat logout admin.", error);
           setStatus("sessionStatus", "Tidak dapat keluar. Coba lagi.", true);
         });
-      });
-
-      elements.profileForm.addEventListener("submit", function (event) {
-        event.preventDefault();
-        var displayName = elements.profileName.value.trim();
-        if (!isAdmin || !supabaseClient || !displayName) {
-          setStatus("profileStatus", "Masukkan nama tampilan dan pastikan Anda login sebagai admin.", true);
-          return;
-        }
-        elements.saveProfileButton.disabled = true;
-        setStatus("profileStatus", "Menyimpan biodata…", false);
-        supabaseClient.auth.updateUser({ data: { full_name: displayName } })
-          .then(function (result) {
-            if (result.error) throw result.error;
-            if (!result.data || !result.data.user) throw new Error("Respons profil tidak tersedia.");
-            currentUser = result.data.user;
-            populateProfile(currentUser);
-            setStatus("profileStatus", "Biodata berhasil disimpan.", false);
-          })
-          .catch(function (error) {
-            console.error("Biodata admin gagal disimpan.", error);
-            setStatus("profileStatus", "Biodata gagal disimpan. Periksa koneksi lalu coba lagi.", true);
-          })
-          .then(function () {
-            elements.saveProfileButton.disabled = false;
-          });
       });
 
       elements.assignmentFeed.addEventListener("click", function (event) {
