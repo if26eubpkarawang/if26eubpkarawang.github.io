@@ -176,6 +176,12 @@
     .home-announcement-title:hover { text-decoration: underline; }
     .home-announcement-course { display: block; color: #748078; font-size: 13px; font-weight: 700; }
     .home-announcement-due { display: block; color: #748078; font-size: 12px; }
+    .home-notice-list { display: grid; gap: 12px; }
+    .home-notice-card { padding: 15px; border: 1px solid #e4e9e3; border-radius: 13px; background: rgba(255, 255, 255, .9); }
+    .home-notice-card h3 { margin: 0; color: var(--green-dark); font-size: 16px; }
+    .home-notice-card p { margin: 8px 0 0; color: #526158; font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .home-notice-meta { margin-top: 9px; color: #748078; font-size: 12px; }
+    #homeNoticeStatus:empty { display: none; }
     .directory { border: 1px solid var(--line); background: var(--paper); border-radius: 18px; box-shadow: var(--shadow); overflow: hidden; }
     .directory-heading { padding: 24px 24px 18px; }
     .directory-title { margin: 18px 0 5px; font-size: 30px; letter-spacing: -.05em; }
@@ -444,6 +450,15 @@
           <div class="home-announcement-footer">
             <button class="assignment-button" id="viewAllAnnouncementsButton" type="button">Lihat semua tugas</button>
           </div>
+        </section>
+        <section class="home-announcement-board" aria-labelledby="homeNoticeTitle">
+          <div class="home-announcement-heading">
+            <div>
+              <h2 id="homeNoticeTitle">Pengumuman &amp; Informasi</h2>
+            </div>
+          </div>
+          <p class="assignment-status" id="homeNoticeStatus" role="status" aria-live="polite">Memuat informasi…</p>
+          <div class="home-notice-list" id="homeNoticeList" aria-live="polite"></div>
         </section>
         <div class="category-grid">
           <button class="category-card officers" data-category="Pengurus Kelas IF26E" data-title="Daftar Kontak Pengurus Kelas IF26E" data-subtitle="Dosen &amp; Koordinator Mata Kuliah" type="button">
@@ -954,6 +969,59 @@
           });
       }
 
+      function renderPublicAnnouncements(rows) {
+        var list = document.getElementById("homeNoticeList");
+        if (!rows.length) {
+          list.innerHTML = "";
+          setAssignmentStatus("homeNoticeStatus", "Belum ada pengumuman informasi.", false);
+          return;
+        }
+        setAssignmentStatus("homeNoticeStatus", "", false);
+        list.innerHTML = rows.map(function (announcement) {
+          var publishedAt = new Date(announcement.created_at);
+          var publishedAtLabel = isNaN(publishedAt.getTime())
+            ? "Tanggal tidak diketahui"
+            : publishedAt.toLocaleString("id-ID", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit"
+            });
+          return '<article class="home-notice-card"><h3>' + escapeHTML(announcement.title) + '</h3>' +
+            '<p>' + escapeHTML(announcement.content) + '</p>' +
+            '<div class="home-notice-meta">Diterbitkan oleh: ' + escapeHTML(announcement.uploaded_by_name || "Nama belum tercatat") + '</div>' +
+            '<div class="home-notice-meta">' + escapeHTML(publishedAtLabel) + '</div></article>';
+        }).join("");
+      }
+
+      function loadPublicAnnouncements() {
+        var list = document.getElementById("homeNoticeList");
+        if (!supabaseClient) {
+          list.innerHTML = "";
+          setAssignmentStatus("homeNoticeStatus", "Daftar informasi belum terhubung.", true);
+          return;
+        }
+        setAssignmentStatus("homeNoticeStatus", "Memuat informasi…", false);
+        supabaseClient.from("if26e_announcements")
+          .select("title, content, uploaded_by_name, created_at")
+          .order("created_at", { ascending: false })
+          .then(function (result) {
+            if (result.error) {
+              console.error("Tidak dapat memuat pengumuman informasi.", result.error);
+              list.innerHTML = "";
+              setAssignmentStatus("homeNoticeStatus", "Informasi gagal dimuat. Coba muat ulang halaman.", true);
+              return;
+            }
+            renderPublicAnnouncements(result.data || []);
+          })
+          .catch(function (error) {
+            console.error("Kesalahan saat memuat pengumuman informasi.", error);
+            list.innerHTML = "";
+            setAssignmentStatus("homeNoticeStatus", "Informasi gagal dimuat. Coba muat ulang halaman.", true);
+          });
+      }
+
       function openAssignments() {
         activeCategory = "";
         activeClassGroup = "";
@@ -974,8 +1042,12 @@
         setAssignmentStatus("assignmentLoadStatus", "Library Supabase gagal dimuat. Periksa koneksi internet lalu muat ulang halaman.", true);
       }
       loadHomeAnnouncements();
+      loadPublicAnnouncements();
       window.setInterval(function () {
-        if (!document.getElementById("homeView").hidden) loadHomeAnnouncements();
+        if (!document.getElementById("homeView").hidden) {
+          loadHomeAnnouncements();
+          loadPublicAnnouncements();
+        }
       }, 30000);
 
       document.getElementById("assignmentsCard").addEventListener("click", openAssignments);
@@ -993,6 +1065,7 @@
         document.getElementById("topbar").hidden = true;
         document.getElementById("headerHomeButton").hidden = true;
         loadHomeAnnouncements();
+        loadPublicAnnouncements();
       }
 
       document.querySelectorAll(".category-card").forEach(function (card) {

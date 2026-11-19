@@ -62,6 +62,7 @@
     .view-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 18px; }
     .view-heading h2 { margin: 0; font-size: 21px; letter-spacing: -.03em; }
     .view-heading p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+    .announcement-list-heading { margin-top: 24px; }
     .stats-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 18px 0; }
     .stat-card { min-width: 0; padding: 17px; border: 1px solid #e5ece5; border-radius: 15px; background: linear-gradient(145deg, #fff, #f7faf6); }
     .stat-card span { display: block; color: var(--muted); font-size: 12px; font-weight: 700; }
@@ -76,6 +77,10 @@
     .assignment { min-width: 0; padding: 17px; border: 1px solid #e4e9e3; border-radius: 15px; background: linear-gradient(145deg, #fff, #fbfcfa); }
     .assignment h3 { margin: 0; font-size: 16px; }
     .assignment p { margin: 8px 0 0; color: #66736b; font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .announcements { display: grid; gap: 12px; }
+    .announcement { min-width: 0; padding: 17px; border: 1px solid #e4e9e3; border-radius: 15px; background: linear-gradient(145deg, #fff, #fbfcfa); }
+    .announcement h3 { margin: 0; font-size: 16px; }
+    .announcement p { margin: 8px 0 0; color: #66736b; font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
     .meta { margin-top: 10px; color: var(--muted); font-size: 12px; }
     .actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; }
     .empty { padding: 44px 18px; border: 1px dashed #dfe8e0; border-radius: 16px; background: #fbfdfb; text-align: center; }
@@ -115,7 +120,7 @@
       <header class="heading">
         <p class="eyebrow">Area khusus pengurus</p>
         <h1 id="pageTitle">Selamat datang</h1>
-        <p class="subtitle">Masuk untuk mengunggah dan mengelola tugas mata kuliah IF26E.</p>
+        <p class="subtitle">Masuk untuk mengunggah tugas dan menerbitkan informasi IF26E.</p>
         <div class="toolbar">
           <span class="status" id="sessionStatus" role="status" aria-live="polite"></span>
           <div class="toolbar-actions">
@@ -144,7 +149,7 @@
         <div>
           <p class="eyebrow">Ruang kerja pengurus</p>
           <h1>Portal Admin IF26E</h1>
-          <p class="subtitle">Kelola tugas kelas dengan lebih mudah.</p>
+          <p class="subtitle">Kelola tugas dan informasi kelas dengan lebih mudah.</p>
         </div>
         <a class="account-chip" href="./profile.html" aria-label="Buka profil admin">
           <span class="avatar" id="profileAvatar" aria-hidden="true"><span id="profileAvatarInitials">IF</span><img id="profileAvatarImage" alt="" hidden></span>
@@ -155,13 +160,14 @@
         <button class="portal-tab" type="button" data-admin-view="overview" aria-current="page">Ringkasan</button>
         <button class="portal-tab" type="button" data-admin-view="upload">Upload tugas</button>
         <button class="portal-tab" type="button" data-admin-view="tasks">Kelola tugas</button>
+        <button class="portal-tab" type="button" data-admin-view="announcements">Pengumuman</button>
       </nav>
 
       <section class="admin-view card view-card" id="overviewView" aria-labelledby="overviewTitle">
         <header class="view-heading">
           <div>
             <h2 id="overviewTitle">Ringkasan</h2>
-            <p>Ikhtisar pengelolaan tugas mata kuliah.</p>
+            <p>Ikhtisar pengelolaan tugas dan informasi kelas.</p>
           </div>
         </header>
         <div class="stats-grid">
@@ -172,6 +178,7 @@
         <div class="quick-actions">
           <button class="button primary" type="button" data-open-admin-view="upload">+ Upload tugas baru</button>
           <button class="button" type="button" data-open-admin-view="tasks">Lihat dan kelola tugas</button>
+          <button class="button" type="button" data-open-admin-view="announcements">+ Buat pengumuman</button>
         </div>
         <p class="status" id="dashboardLoadStatus" role="status" aria-live="polite"></p>
       </section>
@@ -223,6 +230,38 @@
         </div>
       </section>
 
+      <section class="admin-view card view-card" id="announcementsView" hidden aria-labelledby="announcementsTitle">
+        <header class="view-heading">
+          <div>
+            <h2 id="announcementsTitle">Pengumuman &amp; Informasi</h2>
+            <p>Terbitkan informasi kelas yang dapat dibaca semua mahasiswa.</p>
+          </div>
+        </header>
+        <section class="upload" aria-label="Formulir pengumuman">
+          <form class="form-grid" id="announcementForm">
+            <label class="field full">Judul
+              <input id="announcementTitle" type="text" maxlength="120" required>
+            </label>
+            <label class="field full">Isi informasi
+              <textarea id="announcementContent" maxlength="5000" rows="5" required></textarea>
+            </label>
+            <div class="field full">
+              <button class="button primary" id="announcementButton" type="submit">Terbitkan pengumuman</button>
+              <p class="status" id="announcementStatus" role="status" aria-live="polite"></p>
+            </div>
+          </form>
+        </section>
+        <div class="view-heading announcement-list-heading">
+          <div>
+            <h2>Daftar pengumuman</h2>
+            <p>Pengumuman yang diterbitkan dapat dihapus di sini.</p>
+          </div>
+        </div>
+        <p class="status" id="announcementLoadStatus" role="status" aria-live="polite"></p>
+        <p class="status" id="announcementDeleteStatus" role="status" aria-live="polite"></p>
+        <div class="announcements" id="announcementFeed" aria-live="polite"></div>
+      </section>
+
     </section>
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -262,6 +301,9 @@
         portalTabs: document.getElementById("portalTabs"),
         uploadForm: document.getElementById("uploadForm"),
         uploadButton: document.getElementById("uploadButton"),
+        announcementForm: document.getElementById("announcementForm"),
+        announcementButton: document.getElementById("announcementButton"),
+        announcementFeed: document.getElementById("announcementFeed"),
         course: document.getElementById("course"),
         assignmentFeed: document.getElementById("assignmentFeed"),
         profileAvatar: document.getElementById("profileAvatar"),
@@ -303,6 +345,47 @@
           return fetchAssignments(false).then(function (fallbackResult) {
             return { result: fallbackResult, uploaderAvailable: false };
           });
+        });
+      }
+
+      function deleteAnnouncement(button) {
+        if (!supabaseClient || !isAdmin) {
+        setStatus("announcementDeleteStatus", "Login sebagai pengurus untuk menghapus pengumuman.", true);
+        return;
+        }
+        var announcementId = button.getAttribute("data-announcement-id");
+        if (!announcementId) {
+        setStatus("announcementDeleteStatus", "Data pengumuman tidak lengkap sehingga tidak dapat dihapus.", true);
+        return;
+        }
+        if (!window.confirm("Hapus pengumuman ini? Tindakan ini tidak dapat dibatalkan.")) return;
+        button.disabled = true;
+        setStatus("announcementDeleteStatus", "Menghapus pengumuman…", false);
+        var announcementDeleted = false;
+        supabaseClient.from("if26e_announcements")
+        .delete()
+        .eq("id", announcementId)
+        .select("id")
+        .then(function (result) {
+          if (result.error) {
+            console.error("Tidak dapat menghapus pengumuman.", result.error);
+            setStatus("announcementDeleteStatus", "Pengumuman gagal dihapus. Periksa koneksi dan akses admin.", true);
+            return;
+          }
+          if (!result.data || result.data.length !== 1) {
+            setStatus("announcementDeleteStatus", "Pengumuman tidak ditemukan atau sudah dihapus.", true);
+            return;
+          }
+          announcementDeleted = true;
+          setStatus("announcementDeleteStatus", "Pengumuman berhasil dihapus.", false);
+        })
+        .catch(function (error) {
+          console.error("Kesalahan saat menghapus pengumuman.", error);
+          setStatus("announcementDeleteStatus", "Pengumuman gagal dihapus. Coba lagi.", true);
+        })
+        .then(function () {
+          if (announcementDeleted) loadAnnouncements();
+          button.disabled = false;
         });
       }
 
@@ -357,7 +440,8 @@
         var viewIds = {
           overview: "overviewView",
           upload: "uploadView",
-          tasks: "tasksView"
+          tasks: "tasksView",
+          announcements: "announcementsView"
         };
         if (!viewIds[viewName] || !isAdmin) return;
         document.querySelectorAll(".admin-view").forEach(function (view) {
@@ -391,8 +475,10 @@
           populateAccountSummary(currentUser);
           showAdminView("overview");
           loadAssignments();
+          loadAnnouncements();
         } else {
           elements.assignmentFeed.innerHTML = "";
+          elements.announcementFeed.innerHTML = "";
           elements.taskCount.textContent = "0";
           elements.courseCount.textContent = "0";
           setLoadStatus("", false);
@@ -466,6 +552,56 @@
             }).join("") + '</div></section>';
         }).join("");
         elements.assignmentFeed.innerHTML = markup || '<div class="empty"><h2>Belum ada tugas</h2><p>Tugas yang diunggah pengurus akan muncul di sini.</p></div>';
+      }
+
+      function formatAnnouncementDate(value) {
+        var date = new Date(value);
+        if (isNaN(date.getTime())) return "Tanggal tidak diketahui";
+        return date.toLocaleString("id-ID", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+      }
+
+      function renderAnnouncements(rows) {
+        if (!rows.length) {
+          elements.announcementFeed.innerHTML = '<div class="empty"><h2>Belum ada pengumuman</h2><p>Pengumuman yang diterbitkan akan tampil di sini.</p></div>';
+          return;
+        }
+        elements.announcementFeed.innerHTML = rows.map(function (announcement) {
+          return '<article class="announcement"><h3>' + escapeHTML(announcement.title) + '</h3>' +
+            '<p>' + escapeHTML(announcement.content) + '</p>' +
+            '<div class="meta">Diterbitkan oleh: ' + escapeHTML(announcement.uploaded_by_name || "Nama belum tercatat") + '</div>' +
+            '<div class="meta">' + escapeHTML(formatAnnouncementDate(announcement.created_at)) + '</div>' +
+            '<div class="actions"><button class="button danger" type="button" data-delete-announcement="true" data-announcement-id="' +
+            escapeHTML(announcement.id) + '">Hapus pengumuman</button></div></article>';
+        }).join("");
+      }
+
+      function loadAnnouncements() {
+        if (!supabaseClient || !isAdmin) return;
+        setStatus("announcementLoadStatus", "Memuat pengumuman…", false);
+        supabaseClient.from("if26e_announcements")
+          .select("id, title, content, uploaded_by_name, created_at")
+          .order("created_at", { ascending: false })
+          .then(function (result) {
+            if (result.error) {
+              console.error("Tidak dapat memuat pengumuman.", result.error);
+              setStatus("announcementLoadStatus", "Daftar pengumuman gagal dimuat. Periksa migrasi Supabase dan kebijakan akses.", true);
+              elements.announcementFeed.innerHTML = "";
+              return;
+            }
+            setStatus("announcementLoadStatus", "", false);
+            renderAnnouncements(result.data || []);
+          })
+          .catch(function (error) {
+            console.error("Kesalahan saat memuat pengumuman.", error);
+            setStatus("announcementLoadStatus", "Terjadi kesalahan saat memuat pengumuman. Coba muat ulang halaman.", true);
+            elements.announcementFeed.innerHTML = "";
+          });
       }
 
       function loadAssignments() {
@@ -619,6 +755,42 @@
       elements.assignmentFeed.addEventListener("click", function (event) {
         var button = event.target.closest("[data-delete-assignment]");
         if (button) deleteAssignment(button);
+      });
+
+      elements.announcementFeed.addEventListener("click", function (event) {
+        var button = event.target.closest("[data-delete-announcement]");
+        if (button) deleteAnnouncement(button);
+      });
+
+      elements.announcementForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+        if (!supabaseClient || !isAdmin) {
+          setStatus("announcementStatus", "Silakan login dengan akun admin terlebih dahulu.", true);
+          return;
+        }
+        var title = document.getElementById("announcementTitle").value.trim();
+        var content = document.getElementById("announcementContent").value.trim();
+        if (!title || !content) {
+          setStatus("announcementStatus", "Isi judul dan informasi pengumuman terlebih dahulu.", true);
+          return;
+        }
+        elements.announcementButton.disabled = true;
+        setStatus("announcementStatus", "Menerbitkan pengumuman…", false);
+        supabaseClient.from("if26e_announcements")
+          .insert({ title: title, content: content })
+          .then(function (result) {
+            if (result.error) throw result.error;
+            setStatus("announcementStatus", "Pengumuman berhasil diterbitkan.", false);
+            elements.announcementForm.reset();
+            loadAnnouncements();
+          })
+          .catch(function (error) {
+            console.error("Pengumuman gagal diterbitkan.", error);
+            setStatus("announcementStatus", "Pengumuman gagal diterbitkan. Periksa migrasi Supabase dan koneksi.", true);
+          })
+          .then(function () {
+            elements.announcementButton.disabled = false;
+          });
       });
 
       elements.uploadForm.addEventListener("submit", function (event) {
