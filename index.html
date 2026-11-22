@@ -763,6 +763,8 @@
 
       var uploaderWhatsAppByUserId = Object.create(null);
       var uploaderContactsPromise = null;
+      var uploaderProfilesByUserId = Object.create(null);
+      var uploaderProfilesPromise = null;
 
       function loadUploaderContacts() {
         if (!supabaseClient) return Promise.resolve(false);
@@ -784,6 +786,26 @@
             return false;
           });
         return uploaderContactsPromise;
+      }
+
+      function loadUploaderProfiles() {
+        if (!supabaseClient) return Promise.resolve(false);
+        if (uploaderProfilesPromise) return uploaderProfilesPromise;
+        uploaderProfilesPromise = supabaseClient.from("if26e_admin_profiles")
+          .select("user_id, display_name, bio")
+          .then(function (result) {
+            if (result.error) throw result.error;
+            uploaderProfilesByUserId = Object.create(null);
+            (result.data || []).forEach(function (profile) {
+              uploaderProfilesByUserId[profile.user_id] = profile;
+            });
+            return true;
+          })
+          .catch(function (error) {
+            console.error("Profil pengunggah gagal dimuat.", error);
+            return false;
+          });
+        return uploaderProfilesPromise;
       }
 
       function uploaderWhatsAppMarkup(userId, uploaderName, itemTitle) {
@@ -1172,6 +1194,8 @@
       } else if (supabaseConfigReady) {
         setAssignmentStatus("assignmentLoadStatus", "Library Supabase gagal dimuat. Periksa koneksi internet lalu muat ulang halaman.", true);
       }
+      loadUploaderContacts();
+      loadUploaderProfiles();
       loadHomeAnnouncements();
       loadPublicAnnouncements();
       window.setInterval(function () {
@@ -1234,6 +1258,10 @@
         var uploaderId = button.getAttribute("data-uploader-id");
         var uploaderName = button.getAttribute("data-uploader-name") || "Pengurus IF26E";
         var avatarUrl = supabaseClient.storage.from("if26e-admin-avatars").getPublicUrl(uploaderId + "/avatar").data.publicUrl;
+        var profile = uploaderProfilesByUserId[uploaderId] || null;
+        var bio = profile && profile.bio ? profile.bio : "";
+        var phone = uploaderWhatsAppByUserId[uploaderId] || "";
+        var whatsappUrl = phone ? "https://wa.me/" + String(phone).replace(/\D/g, "") : "";
         var existing = document.getElementById("uploaderProfileFallback");
         if (existing) existing.remove();
         var initials = escapeHTML(uploaderName.split(/\s+/).slice(0, 2).map(function (part) {
@@ -1254,6 +1282,12 @@
               '</div>' +
               '<div><div style="color:#748078;font-size:12px;">Pengurus IF26E</div><div style="margin-top:3px;font-size:18px;font-weight:850;">' + escapeHTML(uploaderName) + '</div></div>' +
             '</div>' +
+            '<div style="margin-top:14px;">' +
+              '<div style="margin-bottom:6px;color:#748078;font-size:11px;font-weight:800;text-transform:uppercase;">Bio</div>' +
+              '<p style="margin:0;color:#526158;font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere;">' +
+                escapeHTML(bio || "Belum ada bio.") + '</p>' +
+            '</div>' +
+            (whatsappUrl ? '<a href="' + escapeHTML(whatsappUrl) + '" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;justify-content:center;min-height:40px;margin-top:16px;padding:9px 13px;border:1px solid #236543;border-radius:10px;background:linear-gradient(135deg,#277451,#1d5e40);color:#fff;font-size:13px;font-weight:800;text-decoration:none;">Hubungi lewat WhatsApp</a>' : "") +
           '</div>';
         document.body.appendChild(overlay);
         document.getElementById("closeUploaderProfileFallback").addEventListener("click", function () {
