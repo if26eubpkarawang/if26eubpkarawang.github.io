@@ -84,6 +84,13 @@
     .announcement p { margin: 8px 0 0; color: #66736b; font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
     .meta { margin-top: 10px; color: var(--muted); font-size: 12px; }
     .actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; }
+    .whatsapp-contact-link { display: inline-flex; align-items: center; min-height: 34px; padding: 7px 10px; border: 1px solid #cfe1d4; border-radius: 9px; background: #f3faf5; color: #1c5d40; font-size: 12px; font-weight: 750; text-decoration: none; }
+    .whatsapp-contact-link:hover { background: #e7f3e9; }
+    .whatsapp-contact-unavailable { color: var(--muted); font-size: 12px; }
+    .uploader-identity { display: flex; align-items: center; gap: 9px; margin-top: 10px; }
+    .uploader-avatar { position: relative; width: 34px; height: 34px; flex: 0 0 34px; display: grid; place-items: center; overflow: hidden; border-radius: 50%; background: #f2bf57; color: #284735; font-size: 11px; font-weight: 850; }
+    .uploader-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .uploader-identity .meta { margin-top: 0; }
     .empty { padding: 44px 18px; border: 1px dashed #dfe8e0; border-radius: 16px; background: #fbfdfb; text-align: center; }
     .empty h2 { margin: 0 0 5px; font-size: 17px; }
     .empty p { margin: 0; color: var(--muted); font-size: 13px; }
@@ -113,7 +120,7 @@
         <span>IF26E <span class="subtitle">Portal Pengurus</span></span>
       </a>
       <div class="topbar-actions">
-        <a class="nav-link" href="./activate.html">Aktivasi akun</a>
+        <a class="nav-link" id="activationLink" href="./activate.html">Aktivasi akun</a>
         <button class="button danger" id="logoutButton" type="button" hidden>Keluar</button>
       </div>
     </nav>
@@ -125,7 +132,7 @@
         <div class="toolbar">
           <span class="status" id="sessionStatus" role="status" aria-live="polite"></span>
           <div class="toolbar-actions">
-            <button class="button primary" id="loginToggle" type="button">Login Pengurus</button>
+            <button class="button primary" id="loginToggle" type="button" aria-expanded="false" aria-controls="loginForm">Login Pengurus</button>
           </div>
         </div>
       </header>
@@ -246,7 +253,6 @@
             <h2 id="tasksTitle">Kelola tugas</h2>
             <p>Periksa file yang diunggah atau hapus tugas yang sudah tidak berlaku.</p>
           </div>
-          <button class="button primary" type="button" data-open-admin-view="upload">+ Upload tugas / pengumuman</button>
         </header>
         <p class="status" id="loadStatus" role="status" aria-live="polite"></p>
         <p class="status" id="deleteStatus" role="status" aria-live="polite"></p>
@@ -289,6 +295,7 @@
         userId: document.getElementById("userId"),
         password: document.getElementById("password"),
         sessionStatus: document.getElementById("sessionStatus"),
+        activationLink: document.getElementById("activationLink"),
         logoutButton: document.getElementById("logoutButton"),
         adminPanel: document.getElementById("adminPanel"),
         portalTabs: document.getElementById("portalTabs"),
@@ -320,11 +327,63 @@
           /uploaded_by_name/i.test(error.message || "");
       }
 
+      function uploaderAvatarMarkup(userId, uploaderName) {
+        var initials = escapeHTML(String(uploaderName || "IF").trim().split(/\s+/).slice(0, 2).map(function (part) {
+          return part.charAt(0);
+        }).join("").toUpperCase() || "IF");
+        if (!userId) return '<span class="uploader-avatar" aria-hidden="true">' + initials + '</span>';
+        var avatarPath = userId + "/avatar";
+        var avatarUrl = supabaseClient.storage.from("if26e-admin-avatars").getPublicUrl(avatarPath).data.publicUrl;
+        return '<span class="uploader-avatar" aria-hidden="true"><span>' + initials + '</span><img src="' +
+          escapeHTML(avatarUrl + "?v=" + encodeURIComponent(Date.now())) + '" alt="" onload="this.previousElementSibling.hidden=true" onerror="this.remove()"></span>';
+      }
+
+      var uploaderWhatsAppByUserId = Object.create(null);
+      var uploaderContactsPromise = null;
+
+      function loadUploaderContacts() {
+        if (!supabaseClient) return Promise.resolve(false);
+        if (uploaderContactsPromise) return uploaderContactsPromise;
+        uploaderContactsPromise = supabaseClient.from("if26e_admin_contacts")
+          .select("user_id, whatsapp_number")
+          .then(function (result) {
+            if (result.error) throw result.error;
+            uploaderWhatsAppByUserId = Object.create(null);
+            (result.data || []).forEach(function (contact) {
+              if (contact.user_id && contact.whatsapp_number) {
+                uploaderWhatsAppByUserId[contact.user_id] = contact.whatsapp_number;
+              }
+            });
+            return true;
+          })
+          .catch(function (error) {
+            console.error("Kontak WhatsApp pengunggah gagal dimuat.", error);
+            return false;
+          });
+        return uploaderContactsPromise;
+      }
+
+      function uploaderWhatsAppMarkup(userId, uploaderName, itemTitle) {
+        var phone = userId && uploaderWhatsAppByUserId[userId];
+        if (!phone) return "";
+        var digits = String(phone).replace(/\D/g, "");
+        if (!/^[1-9][0-9]{7,14}$/.test(digits)) return "";
+        var message = "Halo " + (uploaderName || "pengurus IF26E") +
+          ", saya ingin bertanya tentang " + (itemTitle || "unggahan Anda") + ".";
+        return '<a class="whatsapp-contact-link" href="https://wa.me/' + digits +
+          '?text=' + encodeURIComponent(message) +
+          '" target="_blank" rel="noopener noreferrer">Hubungi pengunggah</a>';
+      }
+
       function fetchAssignments(includeUploader) {
-        var columns = "id, course_key, title, description, due_date, file_path, file_name, created_at";
+        var columns = "id, course_key, title, description, due_date, file_path, file_name, created_at, uploaded_by";
         if (includeUploader) columns += ", uploaded_by_name";
+        var now = new Date();
+        var localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+        var today = localDate.toISOString().slice(0, 10);
         return supabaseClient.from("if26e_assignments")
           .select(columns)
+          .or("due_date.gte." + today + ",due_date.is.null")
           .order("due_date", { ascending: true })
           .order("created_at", { ascending: false });
       }
@@ -343,42 +402,44 @@
 
       function deleteAnnouncement(button) {
         if (!supabaseClient || !isAdmin) {
-        setStatus("announcementDeleteStatus", "Login sebagai pengurus untuk menghapus pengumuman.", true);
-        return;
+          setStatus("announcementDeleteStatus", "Login sebagai pengurus untuk menghapus pengumuman.", true);
+          return;
         }
         var announcementId = button.getAttribute("data-announcement-id");
         if (!announcementId) {
-        setStatus("announcementDeleteStatus", "Data pengumuman tidak lengkap sehingga tidak dapat dihapus.", true);
-        return;
+          setStatus("announcementDeleteStatus", "Data pengumuman tidak lengkap sehingga tidak dapat dihapus.", true);
+          return;
         }
         if (!window.confirm("Hapus pengumuman ini? Tindakan ini tidak dapat dibatalkan.")) return;
         button.disabled = true;
         setStatus("announcementDeleteStatus", "Menghapus pengumuman…", false);
         var announcementDeleted = false;
-        supabaseClient.from("if26e_announcements")
-        .delete()
-        .eq("id", announcementId)
-        .select("id")
-        .then(function (result) {
-          if (result.error) {
-            console.error("Tidak dapat menghapus pengumuman.", result.error);
-            setStatus("announcementDeleteStatus", "Pengumuman gagal dihapus. Periksa koneksi dan akses admin.", true);
-            return;
-          }
-          if (!result.data || result.data.length !== 1) {
-            setStatus("announcementDeleteStatus", "Pengumuman tidak ditemukan atau sudah dihapus.", true);
-            return;
-          }
-          announcementDeleted = true;
-          setStatus("announcementDeleteStatus", "Pengumuman berhasil dihapus.", false);
-        })
-        .catch(function (error) {
-          console.error("Kesalahan saat menghapus pengumuman.", error);
-          setStatus("announcementDeleteStatus", "Pengumuman gagal dihapus. Coba lagi.", true);
-        })
-        .then(function () {
-          if (announcementDeleted) loadAnnouncements();
-          button.disabled = false;
+        loadUploaderContacts().then(function () {
+          return supabaseClient.from("if26e_announcements")
+            .delete()
+            .eq("id", announcementId)
+            .select("id")
+            .then(function (result) {
+              if (result.error) {
+                console.error("Tidak dapat menghapus pengumuman.", result.error);
+                setStatus("announcementDeleteStatus", "Pengumuman gagal dihapus. Periksa koneksi dan akses admin.", true);
+                return;
+              }
+              if (!result.data || result.data.length !== 1) {
+                setStatus("announcementDeleteStatus", "Pengumuman tidak ditemukan atau sudah dihapus.", true);
+                return;
+              }
+              announcementDeleted = true;
+              setStatus("announcementDeleteStatus", "Pengumuman berhasil dihapus.", false);
+            })
+            .catch(function (error) {
+              console.error("Kesalahan saat menghapus pengumuman.", error);
+              setStatus("announcementDeleteStatus", "Pengumuman gagal dihapus. Coba lagi.", true);
+            })
+            .then(function () {
+              if (announcementDeleted) loadAnnouncements();
+              button.disabled = false;
+            });
         });
       }
 
@@ -421,7 +482,7 @@
           elements.profileAvatarInitials.hidden = false;
         };
         var expectedAvatarPath = user.id + "/avatar";
-        if (metadata.avatar_path === expectedAvatarPath && supabaseClient) {
+        if (supabaseClient) {
           var publicUrl = supabaseClient.storage.from("if26e-admin-avatars").getPublicUrl(expectedAvatarPath).data.publicUrl;
           elements.profileAvatarImage.src = publicUrl + "?v=" + encodeURIComponent(metadata.avatar_updated_at || "1");
         }
@@ -453,6 +514,10 @@
         setStatus("loadStatus", message, isError);
       }
 
+      function cleanupExpiredAssignments() {
+        return Promise.resolve(false);
+      }
+
       function setAdminState(enabled, user) {
         isAdmin = enabled;
         if (enabled && user) currentUser = user;
@@ -460,14 +525,17 @@
         elements.loginPanel.hidden = enabled;
         elements.adminPanel.hidden = !enabled;
         elements.loginForm.hidden = enabled || elements.loginForm.hidden;
+        elements.activationLink.hidden = enabled;
         elements.logoutButton.hidden = !enabled;
         elements.sessionStatus.textContent = "";
         elements.password.value = "";
         if (enabled) {
           populateAccountSummary(currentUser);
           showAdminView("overview");
-          loadAssignments();
-          loadAnnouncements();
+          cleanupExpiredAssignments().then(function () {
+            loadAssignments();
+            loadAnnouncements();
+          });
         } else {
           elements.assignmentFeed.innerHTML = "";
           elements.announcementFeed.innerHTML = "";
@@ -536,7 +604,9 @@
               var fileUrl = supabaseClient.storage.from(uploadBucket).getPublicUrl(assignment.file_path).data.publicUrl;
               return '<article class="assignment"><h3>' + escapeHTML(assignment.title) + '</h3>' +
                 (assignment.description ? '<p>' + escapeHTML(assignment.description) + '</p>' : '') +
-                '<div class="meta">Diunggah oleh: ' + escapeHTML(assignment.uploaded_by_name || "Nama belum tercatat") + '</div>' +
+                '<div class="uploader-identity">' + uploaderAvatarMarkup(assignment.uploaded_by, assignment.uploaded_by_name) +
+                  '<div class="meta"><strong>' + escapeHTML(assignment.uploaded_by_name || "Nama belum tercatat") + '</strong></div></div>' +
+                uploaderWhatsAppMarkup(assignment.uploaded_by, assignment.uploaded_by_name, assignment.title) +
                 '<div class="meta">Tenggat: ' + escapeHTML(dueDate) + '</div>' +
                 '<div class="actions"><a class="file-link" href="' + escapeHTML(fileUrl) + '" target="_blank" rel="noopener noreferrer">Unduh ' + escapeHTML(assignment.file_name) + '</a>' +
                 '<button class="button danger" type="button" data-delete-assignment="true" data-assignment-id="' + escapeHTML(assignment.id) +
@@ -566,7 +636,9 @@
         elements.announcementFeed.innerHTML = rows.map(function (announcement) {
           return '<article class="announcement"><h3>' + escapeHTML(announcement.title) + '</h3>' +
             '<p>' + escapeHTML(announcement.content) + '</p>' +
-            '<div class="meta">Diterbitkan oleh: ' + escapeHTML(announcement.uploaded_by_name || "Nama belum tercatat") + '</div>' +
+            '<div class="uploader-identity">' + uploaderAvatarMarkup(announcement.uploaded_by, announcement.uploaded_by_name) +
+              '<div class="meta"><strong>' + escapeHTML(announcement.uploaded_by_name || "Nama belum tercatat") + '</strong></div></div>' +
+            uploaderWhatsAppMarkup(announcement.uploaded_by, announcement.uploaded_by_name, announcement.title) +
             '<div class="meta">' + escapeHTML(formatAnnouncementDate(announcement.created_at)) + '</div>' +
             '<div class="actions"><button class="button danger" type="button" data-delete-announcement="true" data-announcement-id="' +
             escapeHTML(announcement.id) + '">Hapus pengumuman</button></div></article>';
@@ -576,9 +648,11 @@
       function loadAnnouncements() {
         if (!supabaseClient || !isAdmin) return;
         setStatus("announcementLoadStatus", "Memuat pengumuman…", false);
-        supabaseClient.from("if26e_announcements")
-          .select("id, title, content, uploaded_by_name, created_at")
-          .order("created_at", { ascending: false })
+        loadUploaderContacts().then(function () {
+          return supabaseClient.from("if26e_announcements")
+            .select("id, title, content, uploaded_by_name, uploaded_by, created_at")
+            .order("created_at", { ascending: false });
+        })
           .then(function (result) {
             if (result.error) {
               console.error("Tidak dapat memuat pengumuman.", result.error);
@@ -604,7 +678,8 @@
         }
         if (!isAdmin) return;
         setLoadStatus("Memuat daftar tugas…", false);
-        fetchAssignmentsWithUploader()
+        loadUploaderContacts()
+          .then(function () { return fetchAssignmentsWithUploader(); })
           .then(function (assignmentResult) {
             var result = assignmentResult.result;
             if (result.error) {
@@ -695,6 +770,7 @@
 
       elements.loginToggle.addEventListener("click", function () {
         elements.loginForm.hidden = !elements.loginForm.hidden;
+        elements.loginToggle.setAttribute("aria-expanded", String(!elements.loginForm.hidden));
         if (!elements.loginForm.hidden) elements.userId.focus();
       });
 
@@ -704,7 +780,7 @@
           setStatus("loginStatus", "Login belum tersedia. Periksa koneksi internet.", true);
           return;
         }
-        var userId = elements.userId.value.trim();
+        var userId = elements.userId.value.trim().toLowerCase();
         if (!/^[a-zA-Z0-9._-]{3,64}$/.test(userId)) {
           setStatus("loginStatus", "Format User ID tidak valid.", true);
           return;
@@ -717,7 +793,16 @@
         }).then(function (result) {
           if (result.error) {
             console.error("Login admin gagal.", result.error);
-            setStatus("loginStatus", "Login gagal. Periksa User ID dan password.", true);
+            var authMessage = String(result.error.message || "").toLowerCase();
+            if (/invalid login credentials|invalid.*password/i.test(authMessage)) {
+              setStatus("loginStatus", "User ID atau password salah.", true);
+            } else if (/email not confirmed/i.test(authMessage)) {
+              setStatus("loginStatus", "Akun belum dikonfirmasi. Aktifkan akun melalui halaman Aktivasi.", true);
+            } else if (/rate limit|too many/i.test(authMessage)) {
+              setStatus("loginStatus", "Percobaan terlalu sering. Tunggu beberapa saat lalu coba lagi.", true);
+            } else {
+              setStatus("loginStatus", result.error.message || "Login gagal. Periksa User ID dan password.", true);
+            }
             return false;
           }
           return verifyAdminMembership(result.data.session);
@@ -846,6 +931,14 @@
       });
 
       populateCourses();
+      window.setInterval(function () {
+        cleanupExpiredAssignments().then(function () {
+          if (isAdmin) {
+            loadAssignments();
+            loadAnnouncements();
+          }
+        });
+      }, 30000);
       if (supabaseClient) {
         supabaseClient.auth.getSession().then(function (result) {
           if (result.error) {

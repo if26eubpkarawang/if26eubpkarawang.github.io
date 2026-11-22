@@ -181,6 +181,13 @@
     .home-notice-card h3 { margin: 0; color: var(--green-dark); font-size: 16px; }
     .home-notice-card p { margin: 8px 0 0; color: #526158; font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
     .home-notice-meta { margin-top: 9px; color: #748078; font-size: 12px; }
+    .whatsapp-contact-link { display: inline-flex; align-items: center; min-height: 34px; margin-top: 8px; padding: 7px 10px; border: 1px solid #cfe1d4; border-radius: 9px; background: #f3faf5; color: #1c5d40; font-size: 12px; font-weight: 750; text-decoration: none; }
+    .whatsapp-contact-link:hover { background: #e7f3e9; }
+    .whatsapp-contact-unavailable { display: inline-block; margin-top: 8px; color: #748078; font-size: 12px; }
+    .uploader-identity { display: flex; align-items: center; gap: 9px; margin-top: 10px; }
+    .uploader-avatar { position: relative; width: 34px; height: 34px; flex: 0 0 34px; display: grid; place-items: center; overflow: hidden; border-radius: 50%; background: #f2bf57; color: #284735; font-size: 11px; font-weight: 850; }
+    .uploader-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .uploader-identity .assignment-meta { margin-top: 0; }
     #homeNoticeStatus:empty { display: none; }
     .directory { border: 1px solid var(--line); background: var(--paper); border-radius: 18px; box-shadow: var(--shadow); overflow: hidden; }
     .directory-heading { padding: 24px 24px 18px; }
@@ -549,7 +556,7 @@
         { id: "officer-06", name: "Winka Amalia Zahra", gender: "female", category: "Pengurus Kelas IF26E", role: "Koordinator Mata Kuliah - Statistika dan Probabilitas", group: "IF26E", phone: "+6285778186963", courseKey: "statistika" },
         { id: "officer-07", name: "Rafa", gender: "male", category: "Pengurus Kelas IF26E", role: "Koordinator Mata Kuliah - Jaringan Komputer", group: "IF26E", phone: "+6281212035575", courseKey: "jaringan" },
         { id: "officer-08", name: "Musfirannisa Ghaida Azzahra", gender: "female", category: "Pengurus Kelas IF26E", role: "Koordinator Mata Kuliah - Pendidikan Pancasila", group: "IF26E", phone: "+6289531640037", courseKey: "pancasila" },
-        { id: "officer-09", name: "Deiva Alya", gender: "female", category: "Pengurus Kelas IF26E", role: "Koordinator Mata Kuliah - Kalkulus", group: "IF26E", phone: "+6289623024888", courseKey: "kalkulus" },
+        { id: "officer-09", name: "Deiva Aliya Rofiah", gender: "female", category: "Pengurus Kelas IF26E", role: "Koordinator Mata Kuliah - Kalkulus", group: "IF26E", phone: "+6289623024888", courseKey: "kalkulus" },
         { id: "if26a-ketua", name: "Anis Risfiyah", gender: "female", category: "Pengurus Kelas IF26", role: "Ketua Kelas", group: "IF26A", phone: "+6281299412078", isLeader: true },
         { id: "if26a-wakil", name: "Putri Nasya", gender: "female", category: "Pengurus Kelas IF26", role: "Wakil Kelas", group: "IF26A", phone: "+6285334782276", isLeader: true },
         { id: "if26a-pancasila", name: "Ira Puspita", gender: "female", category: "Pengurus Kelas IF26", role: "Koordinator Mata Kuliah - Pendidikan Pancasila", group: "IF26A", phone: "+6287887976880" },
@@ -698,6 +705,12 @@
         });
       }
 
+      function getTodayDateKey() {
+        var now = new Date();
+        var localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+        return localDate.toISOString().slice(0, 10);
+      }
+
       function portraitMarkup(gender) {
         if (gender === "female") {
           return '<svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect width="64" height="64" rx="14" fill="#f0ecf7"/><path d="M7 64c1-11 8-18 20-21l5-2 5 2c12 3 19 10 20 21" fill="#526a7c"/><path d="M12 64V31C12 14 20 5 32 5s20 9 20 26v33H12Z" fill="#76648f"/><path d="M21 25c0-10 4-16 11-16s11 6 11 16v11c0 8-5 13-11 13s-11-5-11-13V25Z" fill="#efc7a8"/><path d="M17 29c1-16 6-24 15-24s14 8 15 24c-6-1-11-4-15-9-4 5-9 8-15 9Z" fill="#76648f"/><path d="M22 33c1-1 3-1 4 0m12 0c1-1 3-1 4 0" fill="none" stroke="#463a45" stroke-width="1.5" stroke-linecap="round"/><path d="M31 35v4m-3 4c2 2 6 2 8 0" fill="none" stroke="#bd8178" stroke-width="1.3" stroke-linecap="round"/></svg>';
@@ -710,6 +723,54 @@
         if (digits.length < 9 || /x/i.test(String(phone))) return "";
         if (digits.indexOf("0") === 0) digits = "62" + digits.slice(1);
         return "https://wa.me/" + digits;
+      }
+
+      var uploaderWhatsAppByUserId = Object.create(null);
+      var uploaderContactsPromise = null;
+
+      function loadUploaderContacts() {
+        if (!supabaseClient) return Promise.resolve(false);
+        if (uploaderContactsPromise) return uploaderContactsPromise;
+        uploaderContactsPromise = supabaseClient.from("if26e_admin_contacts")
+          .select("user_id, whatsapp_number")
+          .then(function (result) {
+            if (result.error) throw result.error;
+            uploaderWhatsAppByUserId = Object.create(null);
+            (result.data || []).forEach(function (contact) {
+              if (contact.user_id && contact.whatsapp_number) {
+                uploaderWhatsAppByUserId[contact.user_id] = contact.whatsapp_number;
+              }
+            });
+            return true;
+          })
+          .catch(function (error) {
+            console.error("Kontak WhatsApp pengunggah gagal dimuat.", error);
+            return false;
+          });
+        return uploaderContactsPromise;
+      }
+
+      function uploaderWhatsAppMarkup(userId, uploaderName, itemTitle) {
+        var phone = userId && uploaderWhatsAppByUserId[userId];
+        if (!phone) return "";
+        var url = whatsappUrl(phone);
+        if (!url) return "";
+        var message = "Halo " + (uploaderName || "pengurus IF26E") +
+          ", saya ingin bertanya tentang " + (itemTitle || "unggahan Anda") + ".";
+        return '<a class="whatsapp-contact-link" href="' +
+          escapeHTML(url + "?text=" + encodeURIComponent(message)) +
+          '" target="_blank" rel="noopener noreferrer">Hubungi pengunggah</a>';
+      }
+
+      function uploaderAvatarMarkup(userId, uploaderName) {
+        var initials = escapeHTML(String(uploaderName || "IF").trim().split(/\s+/).slice(0, 2).map(function (part) {
+          return part.charAt(0);
+        }).join("").toUpperCase() || "IF");
+        if (!userId) return '<span class="uploader-avatar" aria-hidden="true">' + initials + '</span>';
+        var avatarPath = userId + "/avatar";
+        var avatarUrl = supabaseClient.storage.from("if26e-admin-avatars").getPublicUrl(avatarPath).data.publicUrl;
+        return '<span class="uploader-avatar" aria-hidden="true"><span>' + initials + '</span><img src="' +
+          escapeHTML(avatarUrl + "?v=" + encodeURIComponent(Date.now())) + '" alt="" onload="this.previousElementSibling.hidden=true" onerror="this.remove()"></span>';
       }
 
       var helpButton = document.getElementById("helpButton");
@@ -828,10 +889,12 @@
       }
 
       function fetchAssignments(includeUploader) {
-        var columns = "id, course_key, title, description, due_date, file_path, file_name, created_at";
+        var columns = "id, course_key, title, description, due_date, file_path, file_name, created_at, uploaded_by";
         if (includeUploader) columns += ", uploaded_by_name";
+        var today = getTodayDateKey();
         return supabaseClient.from("if26e_assignments")
           .select(columns)
+          .or("due_date.gte." + today + ",due_date.is.null")
           .order("due_date", { ascending: true })
           .order("created_at", { ascending: false });
       }
@@ -867,7 +930,9 @@
               var fileUrl = supabaseClient.storage.from(uploadBucket).getPublicUrl(assignment.file_path).data.publicUrl;
               return '<article class="assignment-card"><h3>' + escapeHTML(assignment.title) + '</h3>' +
                 (assignment.description ? '<p>' + escapeHTML(assignment.description) + '</p>' : '') +
-                '<div class="assignment-meta">Diunggah oleh: ' + escapeHTML(assignment.uploaded_by_name || "Nama belum tercatat") + '</div>' +
+                '<div class="uploader-identity">' + uploaderAvatarMarkup(assignment.uploaded_by, assignment.uploaded_by_name) +
+                  '<div class="assignment-meta"><strong>' + escapeHTML(assignment.uploaded_by_name || "Nama belum tercatat") + '</strong></div></div>' +
+                uploaderWhatsAppMarkup(assignment.uploaded_by, assignment.uploaded_by_name, assignment.title) +
                 '<div class="assignment-meta">Tenggat: ' + escapeHTML(dueDate) + '</div>' +
                 '<div class="assignment-card-actions"><a class="assignment-link" href="' + escapeHTML(fileUrl) + '" target="_blank" rel="noopener noreferrer">' +
                   'Unduh ' + escapeHTML(assignment.file_name) + '</a></div></article>';
@@ -885,7 +950,8 @@
           return;
         }
         setAssignmentStatus("assignmentLoadStatus", "Memuat daftar tugas…", false);
-        fetchAssignmentsWithUploader()
+        loadUploaderContacts()
+          .then(function () { return fetchAssignmentsWithUploader(); })
           .then(function (assignmentResult) {
             var result = assignmentResult.result;
             if (result.error) {
@@ -923,7 +989,9 @@
           return '<li class="home-announcement-item"><div>' +
             '<span class="home-announcement-course">' + escapeHTML(assignment.course_name) + '</span>' +
             '<button class="home-announcement-title" type="button">' + escapeHTML(assignment.title) + '</button></div>' +
-            '<span class="home-announcement-due">Diunggah oleh: ' + escapeHTML(assignment.uploaded_by_name || "Nama belum tercatat") + '</span>' +
+            '<span class="uploader-identity">' + uploaderAvatarMarkup(assignment.uploaded_by, assignment.uploaded_by_name) +
+              '<strong class="home-announcement-due">' + escapeHTML(assignment.uploaded_by_name || "Nama belum tercatat") + '</strong></span>' +
+            uploaderWhatsAppMarkup(assignment.uploaded_by, assignment.uploaded_by_name, assignment.title) +
             (dueDate ? '<span class="home-announcement-due">Tenggat: ' + escapeHTML(dueDate) + '</span>' : '') +
             '</li>';
         }).join("");
@@ -938,7 +1006,8 @@
         }
         setAssignmentStatus("homeAnnouncementStatus", "Memuat pengumuman…", false);
         supabaseClient.from("if26e_assignments")
-          .select("title, course_name, due_date, uploaded_by_name, created_at")
+          .select("title, course_name, due_date, uploaded_by_name, uploaded_by, created_at")
+          .or("due_date.gte." + getTodayDateKey() + ",due_date.is.null")
           .order("created_at", { ascending: false })
           .limit(5)
           .then(function (result) {
@@ -946,7 +1015,8 @@
               if (isMissingUploaderColumn(result.error)) {
                 console.warn("Kolom nama pengunggah belum ada; papan pengumuman dimuat tanpa nama sampai migrasi diterapkan.", result.error);
                 return supabaseClient.from("if26e_assignments")
-                  .select("title, course_name, due_date, created_at")
+                  .select("title, course_name, due_date, uploaded_by, created_at")
+                  .or("due_date.gte." + getTodayDateKey() + ",due_date.is.null")
                   .order("created_at", { ascending: false })
                   .limit(5)
                   .then(function (fallbackResult) {
@@ -990,7 +1060,9 @@
             });
           return '<article class="home-notice-card"><h3>' + escapeHTML(announcement.title) + '</h3>' +
             '<p>' + escapeHTML(announcement.content) + '</p>' +
-            '<div class="home-notice-meta">Diterbitkan oleh: ' + escapeHTML(announcement.uploaded_by_name || "Nama belum tercatat") + '</div>' +
+            '<div class="uploader-identity">' + uploaderAvatarMarkup(announcement.uploaded_by, announcement.uploaded_by_name) +
+              '<div class="home-notice-meta"><strong>' + escapeHTML(announcement.uploaded_by_name || "Nama belum tercatat") + '</strong></div></div>' +
+            uploaderWhatsAppMarkup(announcement.uploaded_by, announcement.uploaded_by_name, announcement.title) +
             '<div class="home-notice-meta">' + escapeHTML(publishedAtLabel) + '</div></article>';
         }).join("");
       }
@@ -1003,11 +1075,21 @@
           return;
         }
         setAssignmentStatus("homeNoticeStatus", "Memuat informasi…", false);
-        supabaseClient.from("if26e_announcements")
-          .select("title, content, uploaded_by_name, created_at")
-          .order("created_at", { ascending: false })
-          .then(function (result) {
+        var query = supabaseClient.from("if26e_announcements")
+            .select("title, content, uploaded_by_name, uploaded_by, created_at")
+            .order("created_at", { ascending: false });
+        query.then(function (result) {
             if (result.error) {
+              if (isMissingUploaderColumn(result.error)) {
+                console.warn("Kolom nama pengunggah belum ada; pengumuman dimuat tanpa nama.", result.error);
+                return supabaseClient.from("if26e_announcements")
+                  .select("title, content, uploaded_by, created_at")
+                  .order("created_at", { ascending: false })
+                  .then(function (fallbackResult) {
+                    if (fallbackResult.error) throw fallbackResult.error;
+                    renderPublicAnnouncements(fallbackResult.data || []);
+                  });
+              }
               console.error("Tidak dapat memuat pengumuman informasi.", result.error);
               list.innerHTML = "";
               setAssignmentStatus("homeNoticeStatus", "Informasi gagal dimuat. Coba muat ulang halaman.", true);
@@ -1047,6 +1129,9 @@
         if (!document.getElementById("homeView").hidden) {
           loadHomeAnnouncements();
           loadPublicAnnouncements();
+        }
+        if (!document.getElementById("assignmentsView").hidden) {
+          loadAssignments();
         }
       }, 30000);
 

@@ -44,12 +44,22 @@
     .credential-section > p { margin: 0 0 16px; color: #68776d; font-size: 13px; }
     .credential-actions { margin-top: 14px; }
     .profile-photo-panel { display: flex; align-items: center; gap: 18px; margin: 0 0 24px; padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: #f9fbf8; }
+    .profile-photo-preview-wrap { position: relative; width: 88px; flex: 0 0 88px; }
     .profile-photo-preview { position: relative; width: 88px; height: 88px; flex: 0 0 88px; display: grid; place-items: center; overflow: hidden; border-radius: 50%; background: #f2bf57; color: #284735; font-size: 24px; font-weight: 900; }
     .profile-photo-preview img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .profile-photo-preview-button { position: relative; width: 88px; height: 88px; padding: 0; border: 0; border-radius: 50%; background: transparent; cursor: pointer; }
+    .profile-photo-preview-button::after { position: absolute; right: 2px; bottom: 2px; width: 28px; height: 28px; display: grid; place-items: center; border: 2px solid #fff; border-radius: 50%; background: #277451; color: #fff; content: "\270E"; font-size: 14px; line-height: 1; box-shadow: 0 4px 10px rgba(34,57,43,.18); }
+    .profile-photo-preview-button:focus-visible { outline: 3px solid rgba(39,116,81,.25); outline-offset: 3px; }
+    .edit-profile-photo-button { position: absolute; right: 0; bottom: 0; width: 34px; height: 34px; display: grid; place-items: center; border: 2px solid #fff; border-radius: 50%; background: #277451; color: #fff; box-shadow: 0 5px 12px rgba(34, 57, 43, .18); }
+    .edit-profile-photo-button:hover { background: #1c5d40; }
+    .edit-profile-photo-button:focus-visible { outline: 3px solid rgba(39, 116, 81, .25); outline-offset: 2px; }
     .profile-photo-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
     .profile-photo-copy h2 { margin: 0 0 4px; font-size: 18px; }
     .profile-photo-copy p { margin: 0 0 10px; color: #68776d; font-size: 13px; }
     .profile-photo-status { margin: 8px 0 0; }
+    .profile-whatsapp-section { margin: 0 0 24px; padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: #f9fbf8; }
+    .profile-whatsapp-section h2 { margin: 0 0 5px; font-size: 18px; }
+    .profile-whatsapp-section > p { margin: 0 0 14px; color: #68776d; font-size: 13px; }
     .login-prompt { padding: 18px; border: 1px solid #e0ebe2; border-radius: 14px; background: #f8faf7; }
     .login-prompt p { margin: 0 0 12px; color: #526158; }
     [hidden] { display: none !important; }
@@ -84,31 +94,46 @@
       <header class="heading">
         <p class="eyebrow">Area khusus pengurus</p>
         <h1 id="profileTitle">Profil Admin IF26E</h1>
-        <p class="subtitle">Kelola nama tampilan dan lihat informasi akun admin Anda.</p>
+        <p class="subtitle">Kelola profil, WhatsApp, dan informasi akun admin Anda.</p>
       </header>
       <div class="content">
         <p class="status" id="profileStatus" role="status" aria-live="polite">Memeriksa sesi admin…</p>
         <section id="profileContent" hidden>
           <section class="profile-photo-panel" aria-labelledby="profilePhotoTitle">
-            <div class="profile-photo-preview">
-              <span id="profilePhotoInitials" aria-hidden="true">IF</span>
-              <img id="profilePhotoImage" alt="Foto profil admin" hidden>
+            <div class="profile-photo-preview-wrap">
+              <button class="profile-photo-preview-button" id="changeProfilePhotoButton" type="button" aria-label="Ganti foto profil" title="Ganti foto profil">
+                <div class="profile-photo-preview">
+                <span id="profilePhotoInitials" aria-hidden="true">IF</span>
+                <img id="profilePhotoImage" alt="Foto profil admin" hidden>
+                </div>
+              </button>
+              <input id="profilePhotoFile" type="file" accept="image/jpeg,image/png,image/webp" hidden>
             </div>
             <div class="profile-photo-copy">
-              <h2 id="profilePhotoTitle">Foto profil</h2>
-              <p>JPG, PNG, atau WebP, maksimal 2 MB. Foto yang diunggah dapat dilihat publik.</p>
-              <div class="profile-photo-controls">
-                <button class="button" id="chooseProfilePhotoButton" type="button">Pilih foto</button>
-                <input id="profilePhotoFile" type="file" accept="image/jpeg,image/png,image/webp" hidden>
-                <button class="button primary" id="saveProfilePhotoButton" type="button" disabled>Simpan foto</button>
-              </div>
-              <p class="status profile-photo-status" id="profilePhotoStatus" role="status" aria-live="polite"></p>
+              <h2 id="profilePhotoTitle"></h2>
             </div>
+          </section>
+          <section class="profile-whatsapp-section" aria-labelledby="whatsappTitle">
+            <h2 id="whatsappTitle">WhatsApp untuk dihubungi</h2>
+            <p>Nomor ini dapat ditampilkan pada tugas dan pengumuman yang Anda unggah.</p>
+            <form id="whatsappForm">
+              <label class="field">Nomor WhatsApp
+                <input id="whatsappNumber" type="tel" inputmode="tel" autocomplete="tel" maxlength="24" placeholder="+6281234567890">
+              </label>
+              <p class="status" id="whatsappHelp">Nomor lokal yang diawali 0 otomatis disimpan dengan kode +62.</p>
+              <div class="form-actions">
+                <button class="button primary" id="saveWhatsAppButton" type="submit">Simpan nomor WhatsApp</button>
+                <p class="status" id="whatsappStatus" role="status" aria-live="polite"></p>
+              </div>
+            </form>
           </section>
           <form id="profileForm">
             <div class="form-grid">
               <label class="field full">Nama tampilan
                 <input id="profileName" type="text" maxlength="80" autocomplete="name" required>
+              </label>
+              <label class="field full">Bio
+                <textarea id="profileBio" maxlength="300" rows="4" placeholder="Tulis deskripsi singkat tentang diri Anda..."></textarea>
               </label>
               <label class="field">User ID
                 <input id="profileUserId" type="text" readonly>
@@ -182,12 +207,16 @@
         loginPrompt: document.getElementById("loginPrompt"),
         profilePhotoInitials: document.getElementById("profilePhotoInitials"),
         profilePhotoImage: document.getElementById("profilePhotoImage"),
+        profilePhotoTitle: document.getElementById("profilePhotoTitle"),
+        changeProfilePhotoButton: document.getElementById("changeProfilePhotoButton"),
         profilePhotoFile: document.getElementById("profilePhotoFile"),
-        profilePhotoStatus: document.getElementById("profilePhotoStatus"),
-        chooseProfilePhotoButton: document.getElementById("chooseProfilePhotoButton"),
-        saveProfilePhotoButton: document.getElementById("saveProfilePhotoButton"),
+        whatsappForm: document.getElementById("whatsappForm"),
+        whatsappNumber: document.getElementById("whatsappNumber"),
+        saveWhatsAppButton: document.getElementById("saveWhatsAppButton"),
+        whatsappStatus: document.getElementById("whatsappStatus"),
         profileForm: document.getElementById("profileForm"),
         profileName: document.getElementById("profileName"),
+        profileBio: document.getElementById("profileBio"),
         profileUserId: document.getElementById("profileUserId"),
         profileEmail: document.getElementById("profileEmail"),
         profileCreatedAt: document.getElementById("profileCreatedAt"),
@@ -205,12 +234,41 @@
       };
       var currentUser = null;
       var isAdmin = false;
-      var selectedAvatarFile = null;
-      var avatarPreviewUrl = null;
 
       function setStatus(element, message, state) {
         element.textContent = message;
         element.className = "status" + (state ? " " + state : "");
+      }
+
+      function normalizeWhatsAppNumber(value) {
+        var digits = String(value || "").replace(/\D/g, "");
+        if (digits.charAt(0) === "0") digits = "62" + digits.slice(1);
+        return /^[1-9][0-9]{7,14}$/.test(digits) ? digits : "";
+      }
+
+      function loadWhatsAppContact(user) {
+        elements.whatsappNumber.disabled = true;
+        elements.saveWhatsAppButton.disabled = true;
+        elements.whatsappNumber.value = "";
+        setStatus(elements.whatsappStatus, "Memuat nomor WhatsApp…", "");
+        supabaseClient.from("if26e_admin_contacts")
+          .select("whatsapp_number")
+          .eq("user_id", user.id)
+          .maybeSingle()
+          .then(function (result) {
+            if (result.error) throw result.error;
+            if (!currentUser || currentUser.id !== user.id) return;
+            elements.whatsappNumber.value = result.data ? "+" + result.data.whatsapp_number : "";
+            setStatus(elements.whatsappStatus, result.data ? "" : "Belum ada nomor WhatsApp.", "");
+            elements.whatsappNumber.disabled = false;
+            elements.saveWhatsAppButton.disabled = false;
+          })
+          .catch(function (error) {
+            console.error("Nomor WhatsApp admin gagal dimuat.", error);
+            setStatus(elements.whatsappStatus, "Tabel WhatsApp belum tersedia di Supabase. Jalankan migrasi WhatsApp.", "error");
+            elements.whatsappNumber.disabled = false;
+            elements.saveWhatsAppButton.disabled = false;
+          });
       }
 
       function getUserId(user) {
@@ -242,21 +300,62 @@
         };
 
         var expectedPath = user.id + "/avatar";
-        if (metadata.avatar_path !== expectedPath) return;
         var publicUrl = supabaseClient.storage.from(AVATAR_BUCKET).getPublicUrl(expectedPath).data.publicUrl;
         var version = metadata.avatar_updated_at || "1";
         elements.profilePhotoImage.src = publicUrl + "?v=" + encodeURIComponent(version);
       }
 
-      function clearAvatarSelection() {
-        selectedAvatarFile = null;
-        elements.profilePhotoFile.value = "";
-        elements.saveProfilePhotoButton.disabled = true;
-        setStatus(elements.profilePhotoStatus, "", "");
-        if (avatarPreviewUrl) URL.revokeObjectURL(avatarPreviewUrl);
-        avatarPreviewUrl = null;
-        if (currentUser) setProfilePhoto(currentUser);
-      }
+      elements.changeProfilePhotoButton.addEventListener("click", function () {
+        elements.profilePhotoFile.click();
+      });
+
+      elements.profilePhotoFile.addEventListener("change", function () {
+        var file = elements.profilePhotoFile.files && elements.profilePhotoFile.files[0];
+        if (!file || !currentUser || !supabaseClient) return;
+        if (allowedAvatarTypes.indexOf(file.type) === -1) {
+          alert("Pilih file JPG, PNG, atau WebP.");
+          elements.profilePhotoFile.value = "";
+          return;
+        }
+        if (file.size > MAX_AVATAR_SIZE) {
+          alert("Ukuran foto maksimal 2 MB.");
+          elements.profilePhotoFile.value = "";
+          return;
+        }
+
+        var previewUrl = URL.createObjectURL(file);
+        elements.profilePhotoInitials.hidden = true;
+        elements.profilePhotoImage.hidden = false;
+        elements.profilePhotoImage.src = previewUrl;
+        elements.changeProfilePhotoButton.disabled = true;
+
+        var path = currentUser.id + "/avatar";
+        supabaseClient.storage.from(AVATAR_BUCKET)
+          .upload(path, file, { cacheControl: "0", contentType: file.type, upsert: true })
+          .then(function (result) {
+            if (result.error) throw result.error;
+            var updatedAt = new Date().toISOString();
+            return supabaseClient.auth.updateUser({
+              data: { avatar_path: path, avatar_updated_at: updatedAt }
+            });
+          })
+          .then(function (result) {
+            if (result.error) throw result.error;
+            if (!result.data || !result.data.user) throw new Error("Respons profil tidak tersedia.");
+            currentUser = result.data.user;
+            showProfile(currentUser);
+          })
+          .catch(function (error) {
+            console.error("Foto profil gagal diperbarui.", error);
+            setProfilePhoto(currentUser);
+            alert("Foto profil gagal diunggah. Coba lagi.");
+          })
+          .then(function () {
+            URL.revokeObjectURL(previewUrl);
+            elements.profilePhotoFile.value = "";
+            elements.changeProfilePhotoButton.disabled = false;
+          });
+      });
 
       function showLoginPrompt(message, isError) {
         elements.profileContent.hidden = true;
@@ -275,7 +374,12 @@
           user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name) ||
           getUserId(user) || "Pengurus IF26E"
         ).trim();
+        elements.profileBio.value = String(
+          user.user_metadata && user.user_metadata.bio || ""
+        ).trim();
+        elements.profilePhotoTitle.textContent = elements.profileName.value;
         setProfilePhoto(user);
+        loadWhatsAppContact(user);
         elements.profileUserId.value = getUserId(user);
         elements.credentialUserId.value = getUserId(user);
         elements.profileEmail.value = user.email || "";
@@ -304,97 +408,59 @@
           });
       }
 
-      elements.chooseProfilePhotoButton.addEventListener("click", function () {
-        elements.profilePhotoFile.click();
-      });
-
-      elements.profilePhotoFile.addEventListener("change", function () {
-        var file = elements.profilePhotoFile.files && elements.profilePhotoFile.files[0];
-        if (!file) {
-          clearAvatarSelection();
-          return;
-        }
-        if (allowedAvatarTypes.indexOf(file.type) === -1) {
-          clearAvatarSelection();
-          setStatus(elements.profilePhotoStatus, "Pilih file JPG, PNG, atau WebP.", "error");
-          return;
-        }
-        if (file.size > MAX_AVATAR_SIZE) {
-          clearAvatarSelection();
-          setStatus(elements.profilePhotoStatus, "Ukuran foto maksimal 2 MB.", "error");
+      elements.whatsappForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+        if (!isAdmin || !supabaseClient || !currentUser) {
+          setStatus(elements.whatsappStatus, "Pastikan Anda login sebagai admin.", "error");
           return;
         }
 
-        selectedAvatarFile = file;
-        if (avatarPreviewUrl) URL.revokeObjectURL(avatarPreviewUrl);
-        avatarPreviewUrl = URL.createObjectURL(file);
-        elements.profilePhotoInitials.hidden = true;
-        elements.profilePhotoImage.hidden = false;
-        elements.profilePhotoImage.src = avatarPreviewUrl;
-        elements.saveProfilePhotoButton.disabled = false;
-        setStatus(elements.profilePhotoStatus, "Foto siap disimpan.", "");
-      });
-
-      elements.saveProfilePhotoButton.addEventListener("click", function () {
-        if (!isAdmin || !supabaseClient || !currentUser || !selectedAvatarFile) {
-          setStatus(elements.profilePhotoStatus, "Pilih foto dan pastikan Anda login sebagai admin.", "error");
+        var rawNumber = elements.whatsappNumber.value.trim();
+        var number = normalizeWhatsAppNumber(rawNumber);
+        if (rawNumber && !number) {
+          setStatus(elements.whatsappStatus, "Masukkan nomor WhatsApp yang diawali 0 atau menggunakan kode negara.", "error");
           return;
         }
 
-        var file = selectedAvatarFile;
-        var path = currentUser.id + "/avatar";
-        var uploadCompleted = false;
-        elements.saveProfilePhotoButton.disabled = true;
-        elements.profilePhotoFile.disabled = true;
-        setStatus(elements.profilePhotoStatus, "Mengunggah foto profil…", "");
-        supabaseClient.storage.from(AVATAR_BUCKET)
-          .upload(path, file, { cacheControl: "0", contentType: file.type, upsert: true })
+        elements.saveWhatsAppButton.disabled = true;
+        setStatus(elements.whatsappStatus, rawNumber ? "Menyimpan nomor WhatsApp…" : "Menghapus nomor WhatsApp…", "");
+        var saveRequest = rawNumber
+          ? supabaseClient.from("if26e_admin_contacts")
+            .upsert({ user_id: currentUser.id, whatsapp_number: number }, { onConflict: "user_id" })
+          : supabaseClient.from("if26e_admin_contacts")
+            .delete()
+            .eq("user_id", currentUser.id);
+
+        saveRequest
           .then(function (result) {
             if (result.error) throw result.error;
-            uploadCompleted = true;
-            var updatedAt = new Date().toISOString();
-            return supabaseClient.auth.updateUser({
-              data: { avatar_path: path, avatar_updated_at: updatedAt }
-            });
-          })
-          .then(function (result) {
-            if (result.error) throw result.error;
-            if (!result.data || !result.data.user) throw new Error("Respons profil tidak tersedia.");
-            currentUser = result.data.user;
-            selectedAvatarFile = null;
-            elements.profilePhotoFile.value = "";
-            elements.saveProfilePhotoButton.disabled = true;
-            if (avatarPreviewUrl) URL.revokeObjectURL(avatarPreviewUrl);
-            avatarPreviewUrl = null;
-            showProfile(currentUser);
-            setStatus(elements.profilePhotoStatus, "Foto profil berhasil diperbarui.", "success");
-          })
-          .catch(function (error) {
-            console.error("Foto profil admin gagal diperbarui.", error);
+            elements.whatsappNumber.value = rawNumber ? "+" + number : "";
             setStatus(
-              elements.profilePhotoStatus,
-              uploadCompleted
-                ? "Foto terunggah, tetapi profil belum diperbarui. Coba simpan lagi."
-                : "Foto gagal diunggah. Periksa koneksi lalu coba lagi.",
-              "error"
+              elements.whatsappStatus,
+              rawNumber ? "Nomor WhatsApp berhasil disimpan." : "Nomor WhatsApp berhasil dihapus.",
+              "success"
             );
           })
+          .catch(function (error) {
+            console.error("Nomor WhatsApp admin gagal disimpan.", error);
+            setStatus(elements.whatsappStatus, "Nomor WhatsApp belum dapat disimpan. Jalankan migrasi WhatsApp di Supabase.", "error");
+          })
           .then(function () {
-            elements.profilePhotoFile.disabled = false;
-            if (selectedAvatarFile) elements.saveProfilePhotoButton.disabled = false;
+            elements.saveWhatsAppButton.disabled = false;
           });
       });
 
       elements.profileForm.addEventListener("submit", function (event) {
         event.preventDefault();
         var displayName = elements.profileName.value.trim();
+        var bio = elements.profileBio.value.trim();
         if (!isAdmin || !supabaseClient || !displayName) {
           setStatus(elements.saveStatus, "Masukkan nama tampilan dan pastikan Anda login sebagai admin.", "error");
           return;
         }
         elements.saveProfileButton.disabled = true;
         setStatus(elements.saveStatus, "Menyimpan biodata…", "");
-        supabaseClient.auth.updateUser({ data: { full_name: displayName } })
+        supabaseClient.auth.updateUser({ data: { full_name: displayName, bio: bio } })
           .then(function (result) {
             if (result.error) throw result.error;
             if (!result.data || !result.data.user) throw new Error("Respons profil tidak tersedia.");

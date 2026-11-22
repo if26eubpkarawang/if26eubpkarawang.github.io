@@ -39,9 +39,6 @@
         <label>Kode aktivasi
           <input id="activationCode" type="password" autocomplete="one-time-code" required>
         </label>
-        <label>Password saat ini (hanya jika akun ini sudah ada)
-          <input id="currentPassword" type="password" autocomplete="current-password">
-        </label>
         <label>Password baru (minimal 12 karakter)
           <input id="newPassword" type="password" autocomplete="new-password" minlength="12" required>
         </label>
@@ -51,7 +48,7 @@
         <button class="button" id="activateButton" type="submit">Aktifkan akun</button>
       </form>
       <p class="status" id="status" role="status" aria-live="polite"></p>
-      <p class="note">Kode aktivasi hanya dapat digunakan satu kali. Jangan membagikan kode atau password Anda. Jika akun sudah ada, masukkan password saat ini agar dapat diperbarui.</p>
+      <p class="note">Kode aktivasi hanya dapat digunakan satu kali. Jangan membagikan kode atau password Anda.</p>
     </section>
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -96,7 +93,6 @@
         }
         var userId = document.getElementById("userId").value.trim().toLowerCase();
         var code = document.getElementById("activationCode").value;
-        var currentPassword = document.getElementById("currentPassword").value;
         var newPassword = document.getElementById("newPassword").value;
         var confirmPassword = document.getElementById("confirmPassword").value;
         if (!/^[a-z0-9._-]{3,64}$/.test(userId)) {
@@ -129,18 +125,11 @@
           return { existingSession: false };
         }).then(function (sessionState) {
           if (sessionState.existingSession) return { updatePassword: false };
-          if (currentPassword) {
-            return client.auth.signInWithPassword({ email: email, password: currentPassword })
-              .then(function (signInResult) {
-                if (signInResult.error) throw signInResult.error;
-                return { updatePassword: true };
-              });
-          }
           return client.auth.signUp({ email: email, password: newPassword })
             .then(function (signUpResult) {
               if (signUpResult.error) {
                 if (/already registered|already exists/i.test(signUpResult.error.message)) {
-                  throw new Error("Akun sudah ada. Masukkan password saat ini untuk melanjutkan.");
+                  throw new Error("Akun sudah ada. Login melalui Halaman Admin.");
                 }
                 throw signUpResult.error;
               }
