@@ -189,6 +189,23 @@
     .uploader-identity { display: flex; align-items: center; gap: 9px; margin-top: 10px; }
     .uploader-avatar { position: relative; width: 34px; height: 34px; flex: 0 0 34px; display: grid; place-items: center; overflow: hidden; border-radius: 50%; background: #f2bf57; color: #284735; font-size: 11px; font-weight: 850; }
     .uploader-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .uploader-avatar-button { width: 34px; height: 34px; flex: 0 0 34px; padding: 0; border: 0; border-radius: 50%; background: transparent; cursor: pointer; }
+    .uploader-avatar-button:focus-visible { outline: 3px solid rgba(39, 116, 81, .28); outline-offset: 3px; }
+    .uploader-avatar-button:hover .uploader-avatar { box-shadow: 0 0 0 3px #dfe9e1; }
+    .uploader-dialog {
+      width: min(380px, calc(100% - 32px)); margin: auto; padding: 22px;
+      border: 1px solid var(--line); border-radius: 18px; background: #fff; color: var(--ink);
+      box-shadow: 0 24px 70px rgba(20, 38, 28, .22);
+    }
+    .uploader-dialog::backdrop { background: rgba(24, 40, 31, .48); backdrop-filter: blur(2px); }
+    .uploader-dialog-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+    .uploader-dialog-header h2 { margin: 0; font-size: 18px; }
+    .uploader-dialog-close { min-height: 34px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: #526158; font-size: 12px; font-weight: 700; }
+    .uploader-profile-card { display: flex; align-items: center; gap: 14px; padding: 16px; border: 1px solid #dfe9e1; border-radius: 15px; background: #f8faf7; }
+    .uploader-profile-avatar { width: 72px; height: 72px; position: relative; display: grid; place-items: center; flex: 0 0 72px; overflow: hidden; border-radius: 50%; background: #f2bf57; color: #284735; font-size: 20px; font-weight: 900; }
+    .uploader-profile-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .uploader-profile-name { margin: 3px 0 2px; font-size: 18px; font-weight: 850; }
+    .uploader-profile-label { color: var(--muted); font-size: 12px; }
     .uploader-identity .assignment-meta { margin-top: 0; }
     #homeNoticeStatus:empty { display: none; }
     .directory { border: 1px solid var(--line); background: var(--paper); border-radius: 18px; box-shadow: var(--shadow); overflow: hidden; }
@@ -538,6 +555,13 @@
           </div>
           <div class="lecturer-dialog-content" id="lecturerDialogContent" aria-live="polite"></div>
         </dialog>
+        <dialog class="uploader-dialog" id="uploaderDialog" aria-labelledby="uploaderDialogTitle">
+          <div class="uploader-dialog-header">
+            <h2 id="uploaderDialogTitle">Profil Pengunggah</h2>
+            <button class="uploader-dialog-close" id="closeUploaderDialog" type="button">Tutup</button>
+          </div>
+          <div id="uploaderDialogContent" aria-live="polite"></div>
+        </dialog>
         <footer id="contactTips">
           <span><strong>Tips:</strong> gunakan tombol WhatsApp untuk menghubungi kontak.</span>
         </footer>
@@ -771,8 +795,12 @@
         if (!userId) return '<span class="uploader-avatar" aria-hidden="true">' + initials + '</span>';
         var avatarPath = userId + "/avatar";
         var avatarUrl = supabaseClient.storage.from("if26e-admin-avatars").getPublicUrl(avatarPath).data.publicUrl;
-        return '<span class="uploader-avatar" aria-hidden="true"><span>' + initials + '</span><img src="' +
-          escapeHTML(avatarUrl + "?v=" + encodeURIComponent(Date.now())) + '" alt="" onload="this.previousElementSibling.hidden=true" onerror="this.remove()"></span>';
+        return '<button type="button" class="uploader-avatar-button" data-uploader-profile="true" data-uploader-id="' +
+          escapeHTML(userId) + '" data-uploader-name="' + escapeHTML(uploaderName || "Pengurus IF26E") +
+          '" aria-label="Lihat profil ' + escapeHTML(uploaderName || "Pengurus IF26E") + '">' +
+          '<span class="uploader-avatar" aria-hidden="true"><span>' + initials + '</span><img src="' +
+          escapeHTML(avatarUrl + "?v=" + encodeURIComponent(Date.now())) +
+          '" alt="" onload="this.previousElementSibling.hidden=true" onerror="this.remove()"></span></button>';
       }
 
       var helpButton = document.getElementById("helpButton");
@@ -1173,6 +1201,29 @@
       var lecturerDialog = document.getElementById("lecturerDialog");
       document.getElementById("closeLecturerDialog").addEventListener("click", function () {
         lecturerDialog.close();
+      });
+      var uploaderDialog = document.getElementById("uploaderDialog");
+      document.getElementById("closeUploaderDialog").addEventListener("click", function () {
+        uploaderDialog.close();
+      });
+      uploaderDialog.addEventListener("click", function (event) {
+        if (event.target === uploaderDialog) uploaderDialog.close();
+      });
+      document.addEventListener("click", function (event) {
+        var button = event.target.closest("[data-uploader-profile]");
+        if (!button) return;
+        var uploaderId = button.getAttribute("data-uploader-id");
+        var uploaderName = button.getAttribute("data-uploader-name") || "Pengurus IF26E";
+        var avatarUrl = supabaseClient.storage.from("if26e-admin-avatars").getPublicUrl(uploaderId + "/avatar").data.publicUrl;
+        document.getElementById("uploaderDialogContent").innerHTML =
+          '<div class="uploader-profile-card"><div class="uploader-profile-avatar" id="uploaderProfileAvatar" aria-hidden="true">' +
+            '<span>' + escapeHTML(uploaderName.split(/\s+/).slice(0, 2).map(function (part) { return part.charAt(0); }).join("").toUpperCase() || "IF") + '</span>' +
+            '<img src="' + escapeHTML(avatarUrl + "?v=" + encodeURIComponent(Date.now())) +
+            '" alt="' + escapeHTML(uploaderName) +
+            '" onload="this.previousElementSibling.hidden=true" onerror="this.remove()"></div>' +
+          '<div><div class="uploader-profile-label">Pengurus IF26E</div><div class="uploader-profile-name">' +
+            escapeHTML(uploaderName) + '</div></div></div>';
+        uploaderDialog.showModal();
       });
       list.addEventListener("click", function (event) {
         var button = event.target.closest(".lecturer-toggle");
