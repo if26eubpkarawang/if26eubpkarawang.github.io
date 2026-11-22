@@ -47,6 +47,7 @@ create policy if26e_announcements_admin_delete
       from public.if26e_admins
       where user_id = auth.uid()
     )
+    and uploaded_by = auth.uid()
   );
 
 grant select on public.if26e_announcements to anon, authenticated;

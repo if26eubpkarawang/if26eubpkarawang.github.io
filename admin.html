@@ -272,6 +272,8 @@
       var uploadBucket = "if26e-tugas";
       var isAdmin = false;
       var currentUser = null;
+      var assignmentsCache = [];
+      var announcementsCache = [];
       var scheduleCourses = {
         algoritmaPraktik: { name: "Algoritma (Praktik)" },
         algoritmaTeori: { name: "Algoritma (Teori)" },
@@ -396,6 +398,13 @@
         var announcementId = button.getAttribute("data-announcement-id");
         if (!announcementId) {
           setStatus("announcementDeleteStatus", "Data pengumuman tidak lengkap sehingga tidak dapat dihapus.", true);
+          return;
+        }
+        var announcement = (announcementsCache || []).find(function (item) {
+          return item.id === announcementId;
+        });
+        if (announcement && announcement.uploaded_by !== currentUser.id) {
+          setStatus("announcementDeleteStatus", "Anda hanya dapat menghapus pengumuman yang Anda unggah sendiri.", true);
           return;
         }
         if (!window.confirm("Hapus pengumuman ini? Tindakan ini tidak dapat dibatalkan.")) return;
@@ -569,6 +578,7 @@
       }
 
       function renderAssignments(rows) {
+        assignmentsCache = rows || [];
         var grouped = {};
         var courseCount = 0;
         var assignmentCount = 0;
@@ -596,8 +606,12 @@
                   '<div class="meta"><strong>' + escapeHTML(assignment.uploaded_by_name || "Nama belum tercatat") + '</strong></div></div>' +
                 '<div class="meta">Tenggat: ' + escapeHTML(dueDate) + '</div>' +
                 '<div class="actions"><a class="file-link" href="' + escapeHTML(fileUrl) + '" target="_blank" rel="noopener noreferrer">Unduh ' + escapeHTML(assignment.file_name) + '</a>' +
-                '<button class="button danger" type="button" data-delete-assignment="true" data-assignment-id="' + escapeHTML(assignment.id) +
-                '" data-file-path="' + escapeHTML(assignment.file_path) + '">Hapus tugas</button></div></article>';
+                (assignment.uploaded_by === currentUser.id
+                  ? '<button class="button danger" type="button" data-delete-assignment="true" data-assignment-id="' +
+                    escapeHTML(assignment.id) + '" data-file-path="' + escapeHTML(assignment.file_path) +
+                    '">Hapus tugas</button>'
+                  : '') +
+                '</div></article>';
             }).join("") + '</div></section>';
         }).join("");
         elements.assignmentFeed.innerHTML = markup || '<div class="empty"><h2>Belum ada tugas</h2><p>Tugas yang diunggah pengurus akan muncul di sini.</p></div>';
@@ -616,6 +630,7 @@
       }
 
       function renderAnnouncements(rows) {
+        announcementsCache = rows || [];
         if (!rows.length) {
           elements.announcementFeed.innerHTML = '<div class="empty"><h2>Belum ada pengumuman</h2><p>Pengumuman yang diterbitkan akan tampil di sini.</p></div>';
           return;
@@ -626,8 +641,12 @@
             '<div class="uploader-identity">' + uploaderAvatarMarkup(announcement.uploaded_by, announcement.uploaded_by_name) +
               '<div class="meta"><strong>' + escapeHTML(announcement.uploaded_by_name || "Nama belum tercatat") + '</strong></div></div>' +
             '<div class="meta">' + escapeHTML(formatAnnouncementDate(announcement.created_at)) + '</div>' +
-            '<div class="actions"><button class="button danger" type="button" data-delete-announcement="true" data-announcement-id="' +
-            escapeHTML(announcement.id) + '">Hapus pengumuman</button></div></article>';
+            '<div class="actions">' +
+            (announcement.uploaded_by === currentUser.id
+              ? '<button class="button danger" type="button" data-delete-announcement="true" data-announcement-id="' +
+                escapeHTML(announcement.id) + '">Hapus pengumuman</button>'
+              : '') +
+            '</div></article>';
         }).join("");
       }
 
@@ -696,6 +715,13 @@
         var filePath = button.getAttribute("data-file-path");
         if (!assignmentId || !filePath) {
           setStatus("deleteStatus", "Data tugas tidak lengkap sehingga tidak dapat dihapus.", true);
+          return;
+        }
+        var assignment = (assignmentsCache || []).find(function (item) {
+          return item.id === assignmentId;
+        });
+        if (assignment && assignment.uploaded_by !== currentUser.id) {
+          setStatus("deleteStatus", "Anda hanya dapat menghapus tugas yang Anda unggah sendiri.", true);
           return;
         }
         if (!window.confirm("Hapus pengumuman tugas ini beserta file yang diunggah? Tindakan ini tidak dapat dibatalkan.")) return;
