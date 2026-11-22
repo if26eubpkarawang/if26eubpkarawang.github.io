@@ -86,8 +86,6 @@
     .announcement p { margin: 8px 0 0; color: #66736b; font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
     .meta { margin-top: 10px; color: var(--muted); font-size: 12px; }
     .actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; }
-    .whatsapp-contact-link { display: inline-flex; align-items: center; min-height: 34px; padding: 7px 10px; border: 1px solid #cfe1d4; border-radius: 9px; background: #f3faf5; color: #1c5d40; font-size: 12px; font-weight: 750; text-decoration: none; }
-    .whatsapp-contact-link:hover { background: #e7f3e9; }
     .whatsapp-contact-unavailable { color: var(--muted); font-size: 12px; }
     .uploader-identity { display: flex; align-items: center; gap: 9px; margin-top: 10px; }
     .uploader-avatar { position: relative; width: 34px; height: 34px; flex: 0 0 34px; display: grid; place-items: center; overflow: hidden; border-radius: 50%; background: #f2bf57; color: #284735; font-size: 11px; font-weight: 850; }
@@ -365,18 +363,6 @@
         return uploaderContactsPromise;
       }
 
-      function uploaderWhatsAppMarkup(userId, uploaderName, itemTitle) {
-        var phone = userId && uploaderWhatsAppByUserId[userId];
-        if (!phone) return "";
-        var digits = String(phone).replace(/\D/g, "");
-        if (!/^[1-9][0-9]{7,14}$/.test(digits)) return "";
-        var message = "Halo " + (uploaderName || "pengurus IF26E") +
-          ", saya ingin bertanya tentang " + (itemTitle || "unggahan Anda") + ".";
-        return '<a class="whatsapp-contact-link" href="https://wa.me/' + digits +
-          '?text=' + encodeURIComponent(message) +
-          '" target="_blank" rel="noopener noreferrer">Hubungi pengunggah</a>';
-      }
-
       function fetchAssignments(includeUploader) {
         var columns = "id, course_key, title, description, due_date, file_path, file_name, created_at, uploaded_by";
         if (includeUploader) columns += ", uploaded_by_name";
@@ -608,7 +594,6 @@
                 (assignment.description ? '<p>' + escapeHTML(assignment.description) + '</p>' : '') +
                 '<div class="uploader-identity">' + uploaderAvatarMarkup(assignment.uploaded_by, assignment.uploaded_by_name) +
                   '<div class="meta"><strong>' + escapeHTML(assignment.uploaded_by_name || "Nama belum tercatat") + '</strong></div></div>' +
-                uploaderWhatsAppMarkup(assignment.uploaded_by, assignment.uploaded_by_name, assignment.title) +
                 '<div class="meta">Tenggat: ' + escapeHTML(dueDate) + '</div>' +
                 '<div class="actions"><a class="file-link" href="' + escapeHTML(fileUrl) + '" target="_blank" rel="noopener noreferrer">Unduh ' + escapeHTML(assignment.file_name) + '</a>' +
                 '<button class="button danger" type="button" data-delete-assignment="true" data-assignment-id="' + escapeHTML(assignment.id) +
@@ -640,7 +625,6 @@
             '<p>' + escapeHTML(announcement.content) + '</p>' +
             '<div class="uploader-identity">' + uploaderAvatarMarkup(announcement.uploaded_by, announcement.uploaded_by_name) +
               '<div class="meta"><strong>' + escapeHTML(announcement.uploaded_by_name || "Nama belum tercatat") + '</strong></div></div>' +
-            uploaderWhatsAppMarkup(announcement.uploaded_by, announcement.uploaded_by_name, announcement.title) +
             '<div class="meta">' + escapeHTML(formatAnnouncementDate(announcement.created_at)) + '</div>' +
             '<div class="actions"><button class="button danger" type="button" data-delete-announcement="true" data-announcement-id="' +
             escapeHTML(announcement.id) + '">Hapus pengumuman</button></div></article>';

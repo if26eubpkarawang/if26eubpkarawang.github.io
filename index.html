@@ -183,8 +183,6 @@
     .home-notice-card h3 { margin: 0; color: var(--green-dark); font-size: 16px; }
     .home-notice-card p { margin: 8px 0 0; color: #526158; font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
     .home-notice-meta { margin-top: 9px; color: #748078; font-size: 12px; }
-    .whatsapp-contact-link { display: inline-flex; align-items: center; min-height: 34px; margin-top: 8px; padding: 7px 10px; border: 1px solid #cfe1d4; border-radius: 9px; background: #f3faf5; color: #1c5d40; font-size: 12px; font-weight: 750; text-decoration: none; }
-    .whatsapp-contact-link:hover { background: #e7f3e9; }
     .whatsapp-contact-unavailable { display: inline-block; margin-top: 8px; color: #748078; font-size: 12px; }
     .uploader-identity { display: flex; align-items: center; gap: 9px; margin-top: 10px; }
     .uploader-avatar { position: relative; width: 34px; height: 34px; flex: 0 0 34px; display: grid; place-items: center; overflow: hidden; border-radius: 50%; background: #f2bf57; color: #284735; font-size: 11px; font-weight: 850; }
@@ -808,18 +806,6 @@
         return uploaderProfilesPromise;
       }
 
-      function uploaderWhatsAppMarkup(userId, uploaderName, itemTitle) {
-        var phone = userId && uploaderWhatsAppByUserId[userId];
-        if (!phone) return "";
-        var url = whatsappUrl(phone);
-        if (!url) return "";
-        var message = "Halo " + (uploaderName || "pengurus IF26E") +
-          ", saya ingin bertanya tentang " + (itemTitle || "unggahan Anda") + ".";
-        return '<a class="whatsapp-contact-link" href="' +
-          escapeHTML(url + "?text=" + encodeURIComponent(message)) +
-          '" target="_blank" rel="noopener noreferrer">Hubungi pengunggah</a>';
-      }
-
       function uploaderAvatarMarkup(userId, uploaderName) {
         var initials = escapeHTML(String(uploaderName || "IF").trim().split(/\s+/).slice(0, 2).map(function (part) {
           return part.charAt(0);
@@ -1003,7 +989,6 @@
                 (assignment.description ? '<p>' + escapeHTML(assignment.description) + '</p>' : '') +
                 '<div class="uploader-identity">' + uploaderAvatarMarkup(assignment.uploaded_by, assignment.uploaded_by_name) +
                   '<div class="assignment-meta">' + uploaderNameMarkup(assignment.uploaded_by, assignment.uploaded_by_name) + '</div></div>' +
-                uploaderWhatsAppMarkup(assignment.uploaded_by, assignment.uploaded_by_name, assignment.title) +
                 '<div class="assignment-meta">Tenggat: ' + escapeHTML(dueDate) + '</div>' +
                 '<div class="assignment-card-actions"><a class="assignment-link" href="' + escapeHTML(fileUrl) + '" target="_blank" rel="noopener noreferrer">' +
                   'Unduh ' + escapeHTML(assignment.file_name) + '</a></div></article>';
@@ -1062,7 +1047,6 @@
             '<button class="home-announcement-title" type="button">' + escapeHTML(assignment.title) + '</button></div>' +
             '<span class="uploader-identity">' + uploaderAvatarMarkup(assignment.uploaded_by, assignment.uploaded_by_name) +
               '<span class="home-announcement-due">' + uploaderNameMarkup(assignment.uploaded_by, assignment.uploaded_by_name) + '</span></span>' +
-            uploaderWhatsAppMarkup(assignment.uploaded_by, assignment.uploaded_by_name, assignment.title) +
             (dueDate ? '<span class="home-announcement-due">Tenggat: ' + escapeHTML(dueDate) + '</span>' : '') +
             '</li>';
         }).join("");
@@ -1133,7 +1117,6 @@
             '<p>' + escapeHTML(announcement.content) + '</p>' +
             '<div class="uploader-identity">' + uploaderAvatarMarkup(announcement.uploaded_by, announcement.uploaded_by_name) +
               '<div class="home-notice-meta">' + uploaderNameMarkup(announcement.uploaded_by, announcement.uploaded_by_name) + '</div></div>' +
-            uploaderWhatsAppMarkup(announcement.uploaded_by, announcement.uploaded_by_name, announcement.title) +
             '<div class="home-notice-meta">' + escapeHTML(publishedAtLabel) + '</div></article>';
         }).join("");
       }
