@@ -1234,15 +1234,34 @@
         var uploaderId = button.getAttribute("data-uploader-id");
         var uploaderName = button.getAttribute("data-uploader-name") || "Pengurus IF26E";
         var avatarUrl = supabaseClient.storage.from("if26e-admin-avatars").getPublicUrl(uploaderId + "/avatar").data.publicUrl;
-        document.getElementById("uploaderDialogContent").innerHTML =
-          '<div class="uploader-profile-card"><div class="uploader-profile-avatar" id="uploaderProfileAvatar" aria-hidden="true">' +
-            '<span>' + escapeHTML(uploaderName.split(/\s+/).slice(0, 2).map(function (part) { return part.charAt(0); }).join("").toUpperCase() || "IF") + '</span>' +
-            '<img src="' + escapeHTML(avatarUrl + "?v=" + encodeURIComponent(Date.now())) +
-            '" alt="' + escapeHTML(uploaderName) +
-            '" onload="this.previousElementSibling.hidden=true" onerror="this.remove()"></div>' +
-          '<div><div class="uploader-profile-label">Pengurus IF26E</div><div class="uploader-profile-name">' +
-            escapeHTML(uploaderName) + '</div></div></div>';
-        uploaderDialog.hidden = false;
+        var existing = document.getElementById("uploaderProfileFallback");
+        if (existing) existing.remove();
+        var initials = escapeHTML(uploaderName.split(/\s+/).slice(0, 2).map(function (part) {
+          return part.charAt(0);
+        }).join("").toUpperCase() || "IF");
+        var overlay = document.createElement("div");
+        overlay.id = "uploaderProfileFallback";
+        overlay.setAttribute("role", "dialog");
+        overlay.setAttribute("aria-modal", "true");
+        overlay.style.cssText = "position:fixed;z-index:2147483647;inset:0;display:grid;place-items:center;padding:16px;background:rgba(24,40,31,.48);backdrop-filter:blur(2px);";
+        overlay.innerHTML =
+          '<div style="width:min(380px,100%);padding:22px;border:1px solid #e7ebe5;border-radius:18px;background:#fff;box-shadow:0 24px 70px rgba(20,38,28,.22);color:#1d3129;">' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;"><h2 style="margin:0;font-size:18px;">Profil Pengunggah</h2><button id="closeUploaderProfileFallback" type="button" style="min-height:34px;padding:7px 10px;border:1px solid #e7ebe5;border-radius:8px;background:#fff;color:#526158;font-weight:700;">Tutup</button></div>' +
+            '<div style="display:flex;align-items:center;gap:14px;padding:16px;border:1px solid #dfe9e1;border-radius:15px;background:#f8faf7;">' +
+              '<div style="position:relative;width:72px;height:72px;display:grid;place-items:center;flex:0 0 72px;overflow:hidden;border-radius:50%;background:#f2bf57;color:#284735;font-size:20px;font-weight:900;">' +
+                '<span>' + initials + '</span><img src="' + escapeHTML(avatarUrl + "?v=" + encodeURIComponent(Date.now())) +
+                '" alt="' + escapeHTML(uploaderName) + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onload="this.previousElementSibling.hidden=true" onerror="this.remove()">' +
+              '</div>' +
+              '<div><div style="color:#748078;font-size:12px;">Pengurus IF26E</div><div style="margin-top:3px;font-size:18px;font-weight:850;">' + escapeHTML(uploaderName) + '</div></div>' +
+            '</div>' +
+          '</div>';
+        document.body.appendChild(overlay);
+        document.getElementById("closeUploaderProfileFallback").addEventListener("click", function () {
+          overlay.remove();
+        });
+        overlay.addEventListener("click", function (event) {
+          if (event.target === overlay) overlay.remove();
+        });
       });
       list.addEventListener("click", function (event) {
         var button = event.target.closest(".lecturer-toggle");
