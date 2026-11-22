@@ -190,6 +190,9 @@
     .uploader-avatar { position: relative; width: 34px; height: 34px; flex: 0 0 34px; display: grid; place-items: center; overflow: hidden; border-radius: 50%; background: #f2bf57; color: #284735; font-size: 11px; font-weight: 850; }
     .uploader-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
     .uploader-avatar-button { width: 34px; height: 34px; flex: 0 0 34px; padding: 0; border: 0; border-radius: 50%; background: transparent; cursor: pointer; }
+    .uploader-name-button { margin: 0; padding: 0; border: 0; background: transparent; color: var(--green-dark); cursor: pointer; text-align: left; }
+    .uploader-name-button:hover { text-decoration: underline; }
+    .uploader-name-button:focus-visible { outline: 3px solid rgba(39, 116, 81, .28); outline-offset: 3px; border-radius: 4px; }
     .uploader-avatar-button:focus-visible { outline: 3px solid rgba(39, 116, 81, .28); outline-offset: 3px; }
     .uploader-avatar-button:hover .uploader-avatar { box-shadow: 0 0 0 3px #dfe9e1; }
     .uploader-dialog {
@@ -803,6 +806,15 @@
           '" alt="" onload="this.previousElementSibling.hidden=true" onerror="this.remove()"></span></button>';
       }
 
+      function uploaderNameMarkup(userId, uploaderName) {
+        var name = uploaderName || "Nama belum tercatat";
+        if (!userId) return '<strong>' + escapeHTML(name) + '</strong>';
+        return '<button type="button" class="uploader-name-button" data-uploader-profile="true" data-uploader-id="' +
+          escapeHTML(userId) + '" data-uploader-name="' + escapeHTML(name) +
+          '" aria-label="Lihat profil ' + escapeHTML(name) + '"><strong>' +
+          escapeHTML(name) + '</strong></button>';
+      }
+
       var helpButton = document.getElementById("helpButton");
       var helpContact = contacts.find(function (item) { return item.id === "officer-02"; });
       var helpUrl = helpContact ? whatsappUrl(helpContact.phone) : "";
@@ -961,7 +973,7 @@
               return '<article class="assignment-card"><h3>' + escapeHTML(assignment.title) + '</h3>' +
                 (assignment.description ? '<p>' + escapeHTML(assignment.description) + '</p>' : '') +
                 '<div class="uploader-identity">' + uploaderAvatarMarkup(assignment.uploaded_by, assignment.uploaded_by_name) +
-                  '<div class="assignment-meta"><strong>' + escapeHTML(assignment.uploaded_by_name || "Nama belum tercatat") + '</strong></div></div>' +
+                  '<div class="assignment-meta">' + uploaderNameMarkup(assignment.uploaded_by, assignment.uploaded_by_name) + '</div></div>' +
                 uploaderWhatsAppMarkup(assignment.uploaded_by, assignment.uploaded_by_name, assignment.title) +
                 '<div class="assignment-meta">Tenggat: ' + escapeHTML(dueDate) + '</div>' +
                 '<div class="assignment-card-actions"><a class="assignment-link" href="' + escapeHTML(fileUrl) + '" target="_blank" rel="noopener noreferrer">' +
@@ -1020,7 +1032,7 @@
             '<span class="home-announcement-course">' + escapeHTML(assignment.course_name) + '</span>' +
             '<button class="home-announcement-title" type="button">' + escapeHTML(assignment.title) + '</button></div>' +
             '<span class="uploader-identity">' + uploaderAvatarMarkup(assignment.uploaded_by, assignment.uploaded_by_name) +
-              '<strong class="home-announcement-due">' + escapeHTML(assignment.uploaded_by_name || "Nama belum tercatat") + '</strong></span>' +
+              '<span class="home-announcement-due">' + uploaderNameMarkup(assignment.uploaded_by, assignment.uploaded_by_name) + '</span></span>' +
             uploaderWhatsAppMarkup(assignment.uploaded_by, assignment.uploaded_by_name, assignment.title) +
             (dueDate ? '<span class="home-announcement-due">Tenggat: ' + escapeHTML(dueDate) + '</span>' : '') +
             '</li>';
@@ -1091,7 +1103,7 @@
           return '<article class="home-notice-card"><h3>' + escapeHTML(announcement.title) + '</h3>' +
             '<p>' + escapeHTML(announcement.content) + '</p>' +
             '<div class="uploader-identity">' + uploaderAvatarMarkup(announcement.uploaded_by, announcement.uploaded_by_name) +
-              '<div class="home-notice-meta"><strong>' + escapeHTML(announcement.uploaded_by_name || "Nama belum tercatat") + '</strong></div></div>' +
+              '<div class="home-notice-meta">' + uploaderNameMarkup(announcement.uploaded_by, announcement.uploaded_by_name) + '</div></div>' +
             uploaderWhatsAppMarkup(announcement.uploaded_by, announcement.uploaded_by_name, announcement.title) +
             '<div class="home-notice-meta">' + escapeHTML(publishedAtLabel) + '</div></article>';
         }).join("");
