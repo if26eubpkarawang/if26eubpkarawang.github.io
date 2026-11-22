@@ -1270,7 +1270,7 @@
               '<p style="margin:0;color:#526158;font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere;">' +
                 escapeHTML(bio || "Belum ada bio.") + '</p>' +
             '</div>' +
-            (whatsappUrl ? '<a href="' + escapeHTML(whatsappUrl) + '" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;justify-content:center;min-height:40px;margin-top:16px;padding:9px 13px;border:1px solid #236543;border-radius:10px;background:linear-gradient(135deg,#277451,#1d5e40);color:#fff;font-size:13px;font-weight:800;text-decoration:none;">Hubungi lewat WhatsApp</a>' : "") +
+            (whatsappUrl ? '<a href="' + escapeHTML(whatsappUrl) + '" target="_blank" rel="noopener noreferrer" aria-label="Hubungi ' + escapeHTML(uploaderName) + ' lewat WhatsApp" title="Hubungi lewat WhatsApp" style="display:inline-grid;place-items:center;width:44px;height:44px;margin-top:16px;border:1px solid #236543;border-radius:50%;background:linear-gradient(135deg,#277451,#1d5e40);color:#fff;text-decoration:none;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 11.6a8 8 0 0 1-11.8 7l-4.2 1.1 1.1-4.1A8 8 0 1 1 20 11.6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="m9 8.5 1.1 1.7-.7.8c.5 1 1.3 1.8 2.4 2.3l.7-.8 1.8.9c-.2 1.1-1 1.5-1.9 1.5-2.6-.4-5.3-3-5.7-5.6 0-.8.5-1.4 1.4-1.6" fill="currentColor"/></svg></a>' : "") +
           '</div>';
         document.body.appendChild(overlay);
         document.getElementById("closeUploaderProfileFallback").addEventListener("click", function () {
